@@ -786,7 +786,7 @@ function renderDetailHTML(r){
     ${r.assignee?`<span class="det-meta-item"><i class="ti ti-user"></i>${r.assignee}</span>`:''}
     ${r.updatedAt?`<span class="det-meta-item"><i class="ti ti-pencil"></i>수정됨</span>`:''}
   </div>
-  ${(r.blocks||[]).map((b,bi)=>`<div class="vblk">${b.type==='image'?`<div class="vblk-img-wrap"><img id="vimg_${bi}" src="${b.url}" alt="" style="max-height:260px;object-fit:cover" onclick="window.open('${b.url}','_blank')"><button class="img-copy-btn" onclick="copyImg('${b.url}')"><i class="ti ti-copy"></i> 복사</button></div><div class="img-size-bar">${['S','M','L','전체'].map(s=>`<button class="img-size-btn${s==='M'?' on':''}" onclick="setImgSize(this,'vimg_${bi}','${s}')">${s}</button>`).join('')}</div>`:b.content?`<p>${b.content}</p>`:''}</div>`).join('')}
+  ${(r.blocks||[]).map((b,bi)=>`<div class="vblk">${b.type==='image'?`<div class="vblk-img-wrap" style="text-align:center"><img id="vimg_${bi}" src="${b.url}" alt="" style="width:100%;max-height:none;object-fit:contain;border-radius:13px;border:1px solid var(--border);display:inline-block;cursor:zoom-in;transition:width .2s" onclick="window.open('${b.url}','_blank')"><button class="img-copy-btn" onclick="copyImg('${b.url}')"><i class="ti ti-copy"></i> 복사</button></div><div class="img-size-bar">${['S','M','L','전체'].map(s=>`<button class="img-size-btn${s==='전체'?' on':''}" onclick="setImgSize(this,'vimg_${bi}','${s}')">${s}</button>`).join('')}</div>`:b.content?`<p>${b.content}</p>`:''}</div>`).join('')}
   <div class="det-btn-row">
     <button class="btn-edit" onclick="openEdit('${r.id}')"><i class="ti ti-pencil"></i> 수정</button>
     ${canDel?`<button class="btn-del" onclick="doDel('${r.id}')"><i class="ti ti-trash"></i> 삭제</button>`:`<button class="btn-del" disabled style="opacity:.3;cursor:not-allowed"><i class="ti ti-lock"></i> 권한 없음</button>`}
@@ -810,12 +810,12 @@ function renderDetailHTML(r){
 }
 
 // ═══ Image Size Control ═══
-const IMG_SIZES={S:'150px',M:'260px',L:'420px',전체:'none'};
+const IMG_SIZES={S:'25%',M:'50%',L:'75%',전체:'100%'};
 function setImgSize(btn,imgId,size){
   const img=document.getElementById(imgId);if(!img)return;
-  img.style.maxHeight=IMG_SIZES[size];
-  img.style.objectFit=size==='전체'?'contain':'cover';
-  // update buttons
+  img.style.width=IMG_SIZES[size];
+  img.style.maxHeight='none';
+  img.style.objectFit='contain';
   btn.closest('.vblk').querySelectorAll('.img-size-btn').forEach(b=>{
     b.classList.toggle('on',b.textContent===size);
   });
