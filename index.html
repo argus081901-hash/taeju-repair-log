@@ -1025,7 +1025,7 @@ function doLogout(){if(unsubRecords){unsubRecords();unsubRecords=null;}if(unsubC
 function closeSheet(){document.getElementById('overlay').classList.remove('on');if(unsubComments){unsubComments();unsubComments=null;}}
 function bgClick(e){if(e.target===document.getElementById('overlay'))closeSheet();}
   /* ========== [추가] 게시판 전환 로직 ========== */
-let currentBoardCollection = 'records'; 
+var currentBoardCollection = 'records'; 
 
 function setBoard(boardType) {
   currentBoardCollection = boardType;
