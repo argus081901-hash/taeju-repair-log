@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>태주전자 수리 일지</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#F7F8FC;--white:#fff;--border:#E8EAF0;--border2:#C9CEDE;--text:#111827;--sub:#6B7280;--hint:#9CA3AF;--accent:#5B5FEF;--al:#EEF0FF;--am:#818CF8;--danger:#EF4444;--ok:#059669;--master:#7C3AED;--masterbg:#F5F3FF;--font:'Pretendard',-apple-system,sans-serif}
+body{background:var(--bg);font-family:var(--font);color:var(--text);min-height:100vh}
+.wrap{display:flex;flex-direction:column;min-height:100vh}
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:#ffffffcc;display:none;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:12px}
+.loading-overlay.on{display:flex}
+.spinner{width:38px;height:38px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+.loading-msg{font-size:13px;color:var(--sub)}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Auth */
+.auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg)}
+.auth-card{background:var(--white);border:1.5px solid var(--border);border-radius:20px;padding:32px 28px;width:100%;max-width:340px;box-shadow:0 4px 24px #0000060a}
+.logo-row{text-align:center;margin-bottom:24px}
+.logo-ico{width:52px;height:52px;background:var(--accent);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px}
+.logo-ico i{font-size:26px;color:#fff}
+.auth-title{font-size:19px;font-weight:700;margin-bottom:5px}
+.auth-sub{font-size:13px;color:var(--sub);line-height:1.6}
+.auth-err{font-size:12px;color:var(--danger);background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:none}
+.auth-ok{font-size:12px;color:var(--ok);background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:none}
+.af{margin-bottom:11px}
+.af label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--hint);display:block;margin-bottom:5px}
+.af input{width:100%;background:var(--bg);border:1.5px solid var(--border);color:var(--text);padding:10px 13px;border-radius:10px;font-family:var(--font);font-size:14px;outline:none;transition:border .15s}
+.af input:focus{border-color:var(--accent)}
+.btn-main{width:100%;background:var(--accent);color:#fff;border:none;padding:12px;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;transition:opacity .15s}
+.btn-main:hover{opacity:.88}
+.btn-main:disabled{opacity:.5;cursor:not-allowed}
+.auth-switch{text-align:center;margin-top:14px;font-size:13px;color:var(--sub)}
+.auth-switch a{color:var(--accent);cursor:pointer;font-weight:600}
+/* Header */
+.hdr{background:var(--white);border-bottom:1px solid var(--border);padding:11px 16px;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:10}
+.back-btn{width:30px;height:30px;border:1.5px solid var(--border2);border-radius:8px;background:var(--white);cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--sub);font-size:16px;flex-shrink:0;transition:all .15s}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.back-btn.on{display:flex}
+.hdr-title{font-size:14px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb{flex:1;max-width:210px;display:flex;align-items:center;gap:6px;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;padding:0 10px;transition:border .15s}
+.sb:focus-within{border-color:var(--accent)}
+.sb-icon{font-size:15px;color:var(--hint);flex-shrink:0;line-height:1;display:flex;align-items:center}
+.sb-input{flex:1;border:none;background:transparent;font-family:var(--font);font-size:12px;color:var(--text);outline:none;padding:7px 0;min-width:0}
+.sb-input::placeholder{color:var(--hint)}
+.btn-add{background:var(--accent);color:#fff;border:none;padding:7px 12px;border-radius:9px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0;transition:opacity .15s}
+.btn-add:hover{opacity:.88}
+.ico-btn{width:30px;height:30px;border:1.5px solid var(--border2);border-radius:8px;background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:16px;flex-shrink:0;transition:all .15s}
+.ico-btn:hover{border-color:var(--accent);color:var(--accent)}
+.user-chip{display:flex;align-items:center;gap:5px;background:var(--bg);border:1.5px solid var(--border2);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--sub);flex-shrink:0}
+.user-chip.master{background:var(--masterbg);border-color:#C4B5FD;color:var(--master)}
+/* Main */
+.main{flex:1;padding:16px}
+.slabel{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--hint);margin-bottom:12px}
+.sort-row{display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap}
+.sort-btn{background:var(--white);border:1.5px solid var(--border);border-radius:20px;padding:4px 11px;font-family:var(--font);font-size:11px;font-weight:600;color:var(--sub);cursor:pointer;transition:all .15s;white-space:nowrap}
+.sort-btn:hover{border-color:var(--am);color:var(--accent)}
+.sort-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.tag-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tag-tile{background:var(--white);border:1.5px solid var(--border);border-radius:14px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;gap:5px;padding:7px;position:relative}
+.tag-tile:hover{border-color:var(--am);background:var(--al);transform:translateY(-2px)}
+.tico{width:34px;height:34px;border-radius:9px;background:var(--al);display:flex;align-items:center;justify-content:center}
+.tico i{font-size:18px;color:var(--accent)}
+.tname{font-size:9px;font-weight:700;color:var(--text);text-align:center;word-break:break-all;line-height:1.3}
+.tcnt{position:absolute;top:5px;right:5px;background:var(--al);color:var(--accent);border-radius:20px;font-size:9px;font-weight:700;padding:1px 5px}
+.rlist{display:flex;flex-direction:column;gap:9px}
+.rcard{background:var(--white);border:1.5px solid var(--border);border-radius:13px;cursor:pointer;transition:all .15s;overflow:hidden}
+.rcard:hover{border-color:var(--am);box-shadow:0 2px 14px #5B5FEF10;transform:translateY(-1px)}
+.rc-img{width:100%;height:140px;object-fit:cover;display:block}
+.rc-body{padding:11px 14px}
+.rc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px}
+.rc-model{font-size:13px;font-weight:700;color:var(--text)}
+.rc-assignee{font-size:11px;color:var(--sub);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 8px;white-space:nowrap;flex-shrink:0}
+.rc-exc{font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rc-foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px}
+.rc-tags{display:flex;flex-wrap:wrap;gap:3px}
+.pill{background:var(--al);color:var(--accent);font-size:11px;font-weight:600;padding:2px 7px;border-radius:20px}
+.rc-date{font-size:11px;color:var(--hint)}
+.hl{background:#FEF08A;border-radius:3px;padding:0 2px}
+.search-divider{display:flex;align-items:center;gap:10px;margin:16px 0 12px}
+.search-divider span{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--hint);white-space:nowrap}
+.search-divider::before,.search-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.no-result{text-align:center;padding:28px 20px;color:var(--hint);font-size:13px}
+.empty{text-align:center;padding:52px 20px;color:var(--hint)}
+.empty i{font-size:44px;display:block;margin-bottom:12px;opacity:.3}
+.empty p{font-size:14px;line-height:1.8}
+/* Sheet */
+.overlay{position:fixed;inset:0;background:#00000050;z-index:100;display:none;flex-direction:column;justify-content:flex-end}
+.overlay.on{display:flex}
+.sheet{background:var(--white);border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:18px}
+.sh-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 14px}
+.sh-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.btn-x{background:var(--bg);border:none;width:27px;height:27px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:16px;flex-shrink:0}
+/* Form */
+.fl{margin-bottom:12px}
+.fl label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--hint);display:block;margin-bottom:5px}
+input[type=text],input[type=password],select,textarea{width:100%;background:var(--bg);border:1.5px solid var(--border);color:var(--text);padding:9px 12px;border-radius:10px;font-family:var(--font);font-size:13px;outline:none;transition:border .15s;line-height:1.5}
+input[type=text]:focus,input[type=password]:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px}
+select option{background:var(--white)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tag-wrap{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:6px 9px;display:flex;flex-wrap:wrap;gap:5px;cursor:text;transition:border .15s;align-items:center;min-height:38px}
+.tag-wrap:focus-within{border-color:var(--accent)}
+.tchip{background:var(--al);color:var(--accent);font-size:12px;font-weight:600;padding:2px 7px;border-radius:20px;display:flex;align-items:center;gap:3px;white-space:nowrap}
+.tchip button{background:none;border:none;cursor:pointer;color:var(--accent);font-size:13px;line-height:1;padding:0}
+.tag-field{border:none;background:transparent;font-family:var(--font);font-size:13px;color:var(--text);outline:none;min-width:80px;flex:1}
+.hint{font-size:11px;color:var(--hint);margin-top:4px}
+.fav-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.fav-btn{display:flex;align-items:center;gap:4px;background:var(--white);border:1.5px solid var(--border2);border-radius:20px;padding:3px 9px;font-family:var(--font);font-size:11px;font-weight:600;color:var(--sub);cursor:pointer;transition:all .15s;white-space:nowrap}
+.fav-btn:hover,.fav-btn.used{border-color:var(--accent);color:var(--accent);background:var(--al)}
+.fav-star{font-size:11px;cursor:pointer;color:var(--hint);background:none;border:none;padding:0;line-height:1}
+.fav-star.on{color:#F59E0B}
+.block-list{display:flex;flex-direction:column;gap:7px;margin-bottom:7px}
+.blk{position:relative;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;overflow:hidden}
+.blk img{width:100%;max-height:220px;object-fit:cover;display:block}
+.blk textarea{width:100%;background:transparent;border:none;font-family:var(--font);font-size:13px;color:var(--text);padding:10px 12px;resize:none;outline:none;min-height:75px;line-height:1.7;display:block}
+.blk-del{position:absolute;top:6px;right:6px;background:rgba(255,255,255,.95);border:1px solid var(--border2);width:24px;height:24px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--danger);z-index:2}
+.add-blk-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+.btn-blk{background:var(--al);color:var(--accent);border:1.5px dashed #818CF870;border-radius:10px;padding:10px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s}
+.btn-blk:hover{background:#DDE1FF;border-color:var(--accent)}
+.btn-save{width:100%;background:var(--accent);color:#fff;border:none;padding:12px;border-radius:11px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.btn-save:hover{opacity:.88}
+.btn-save:disabled{opacity:.5;cursor:not-allowed}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.btn-edit{background:var(--al);color:var(--accent);border:1.5px solid #C7D2FE;border-radius:11px;padding:11px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.btn-edit:hover{background:#DDE1FF}
+.btn-del{background:transparent;border:1.5px solid #FECACA;color:var(--danger);padding:11px;border-radius:11px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.btn-del:hover{background:#FEF2F2}
+.btn-del-full{width:100%;background:transparent;border:1.5px solid #FECACA;color:var(--danger);padding:11px;border-radius:11px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:5px}
+.btn-del-full:hover{background:#FEF2F2}
+/* Detail */
+.vblk{margin-bottom:13px}
+.vblk img{width:100%;border-radius:12px;border:1px solid var(--border);display:block;cursor:zoom-in}
+.vblk p{font-size:14px;color:var(--text);line-height:1.8;white-space:pre-wrap}
+.det-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.det-meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.det-meta-item{font-size:12px;color:var(--sub);display:flex;align-items:center;gap:4px}
+.det-meta-item i{font-size:14px;color:var(--hint)}
+/* Settings */
+.set-section{margin-bottom:20px}
+.set-section-title{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--hint);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.set-info{background:var(--bg);border-radius:10px;padding:12px;font-size:13px;color:var(--sub);display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.user-row{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg);border-radius:10px;margin-bottom:6px}
+.u-name{font-size:13px;font-weight:600;flex:1}
+.u-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0}
+.u-badge.master{background:var(--masterbg);color:var(--master)}
+.u-badge.user{background:var(--al);color:var(--accent)}
+.u-toggle{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--sub);cursor:pointer;flex-shrink:0}
+.u-toggle input{cursor:pointer;accent-color:var(--accent)}
+.u-del{background:none;border:none;color:var(--hint);cursor:pointer;font-size:14px;padding:2px;flex-shrink:0}
+.u-del:hover{color:var(--danger)}
+.sep{height:1px;background:var(--border);margin:16px 0}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <span class="loading-msg" id="loadingMsg">로딩 중...</span>
+</div>
+
+<div class="wrap" id="wrap">
+  <div id="authScr" class="auth-screen" style="display:none">
+    <div class="auth-card" id="authCard"></div>
+  </div>
+  <div id="appScr" style="display:none;flex-direction:column;flex:1">
+    <div class="hdr">
+      <button class="back-btn" id="backBtn" onclick="goHome()"><i class="ti ti-arrow-left"></i></button>
+      <span class="hdr-title" id="hdrTitle">태주전자 수리 일지</span>
+      <div class="sb">
+        <span class="sb-icon"><i class="ti ti-search"></i></span>
+        <input class="sb-input" type="text" id="searchInput" placeholder="태그·모델명 검색" oninput="onSearch()">
+      </div>
+      <button class="btn-add" onclick="openAdd()"><i class="ti ti-plus"></i> 추가</button>
+      <div class="user-chip" id="userChip"></div>
+      <button class="ico-btn" onclick="openSettings()"><i class="ti ti-settings"></i></button>
+    </div>
+    <div class="main" id="main"></div>
+  </div>
+  <div class="overlay" id="overlay" onclick="bgClick(event)">
+    <div class="sheet" id="sheet"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// Firebase 초기화
+// ═══════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyC3ssZkQtJZU7dTXwwud8oZa1sep_KK4wM",
+  authDomain: "taeju-repair-log.firebaseapp.com",
+  projectId: "taeju-repair-log",
+  storageBucket: "taeju-repair-log.firebasestorage.app",
+  messagingSenderId: "127515248442",
+  appId: "1:127515248442:web:f4be7d9fbdb0024af9b203"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+// ═══════════════════════════════════════
+// 상태 변수
+// ═══════════════════════════════════════
+const APP = '태주전자 수리 일지';
+let currentUser = null;
+let records = [];
+let favTags = [];
+let aTags = [], aBlks = [];
+let view = 'home', activeTag = null, sortMode = 'newest', editingId = null;
+let unsubRecords = null;
+let isRegistering = false; // 회원가입 중 onAuthStateChanged 중복 방지
+
+// ═══════════════════════════════════════
+// 로딩
+// ═══════════════════════════════════════
+function showLoading(on, msg) {
+  const el = document.getElementById('loadingOverlay');
+  el.className = 'loading-overlay' + (on ? ' on' : '');
+  if (msg) document.getElementById('loadingMsg').textContent = msg;
+}
+
+// ═══════════════════════════════════════
+// Auth 상태 감지
+// ═══════════════════════════════════════
+auth.onAuthStateChanged(async (fireUser) => {
+  if (isRegistering) return; // 회원가입 진행 중이면 무시
+  if (fireUser) {
+    showLoading(true, '사용자 정보 불러오는 중...');
+    try {
+      const doc = await db.collection('users').doc(fireUser.uid).get();
+      if (doc.exists) {
+        currentUser = { uid: fireUser.uid, ...doc.data() };
+        await enterApp();
+      } else {
+        await auth.signOut();
+      }
+    } catch(e) {
+      console.error(e);
+      showLoading(false);
+      showAuthScreen();
+    }
+  } else {
+    showLoading(true, '초기화 중...');
+    currentUser = null;
+    if (unsubRecords) { unsubRecords(); unsubRecords = null; }
+    try {
+      const snap = await db.collection('users').limit(1).get();
+      showAuthScreen();
+      if (snap.empty) showRegister(true);
+      else showLogin();
+    } catch(e) {
+      showAuthScreen();
+      showLogin();
+    }
+    showLoading(false);
+  }
+});
+
+function showAuthScreen() {
+  document.getElementById('appScr').style.display = 'none';
+  document.getElementById('authScr').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════
+// 로그인 / 회원가입
+// ═══════════════════════════════════════
+function showLogin(msg) {
+  document.getElementById('authCard').innerHTML = `
+    <div class="logo-row">
+      <div class="logo-ico"><i class="ti ti-device-mobile"></i></div>
+      <div class="auth-title">${APP}</div>
+      <div class="auth-sub">아이디와 비밀번호로 로그인하세요.</div>
+    </div>
+    ${msg ? `<div class="auth-ok" style="display:block">${msg}</div>` : ''}
+    <div id="ae" class="auth-err"></div>
+    <div class="af"><label>아이디</label><input type="text" id="lid" placeholder="아이디" onkeydown="if(event.key==='Enter')document.getElementById('lpw').focus()"></div>
+    <div class="af"><label>비밀번호</label><input type="password" id="lpw" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-main" id="loginBtn" onclick="doLogin()">로그인</button>
+    <div class="auth-switch">계정이 없으신가요? <a onclick="showRegister(false)">회원가입</a></div>`;
+  setTimeout(() => { const e = document.getElementById('lid'); if(e) e.focus(); }, 100);
+}
+
+function showRegister(isFirst) {
+  document.getElementById('authCard').innerHTML = `
+    <div class="logo-row">
+      <div class="logo-ico"><i class="ti ti-device-mobile"></i></div>
+      <div class="auth-title">${APP}</div>
+      <div class="auth-sub">${isFirst ? '처음 가입하는 계정은 <strong>마스터</strong>가 됩니다.' : '새 계정을 만들어주세요.'}</div>
+    </div>
+    <div id="ae" class="auth-err"></div>
+    <div class="af"><label>아이디</label><input type="text" id="rid" placeholder="아이디 (영문/한글/숫자)"></div>
+    <div class="af"><label>비밀번호</label><input type="password" id="rpw" placeholder="비밀번호 (6자 이상)"></div>
+    <div class="af"><label>비밀번호 확인</label><input type="password" id="rpw2" placeholder="비밀번호 재입력" onkeydown="if(event.key==='Enter')doRegister(${isFirst})"></div>
+    <button class="btn-main" id="regBtn" onclick="doRegister(${isFirst})">${isFirst ? '마스터 계정 만들기' : '계정 만들기'}</button>
+    ${!isFirst ? `<div class="auth-switch">이미 계정이 있으신가요? <a onclick="showLogin()">로그인</a></div>` : ''}`;
+  setTimeout(() => { const e = document.getElementById('rid'); if(e) e.focus(); }, 100);
+}
+
+async function doLogin() {
+  const username = document.getElementById('lid').value.trim();
+  const pw = document.getElementById('lpw').value;
+  const e = document.getElementById('ae');
+  e.style.display = 'none';
+  if (!username || !pw) { e.textContent = '아이디와 비밀번호를 입력해주세요'; e.style.display = 'block'; return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = '로그인 중...';
+  try {
+    // 아이디로 이메일 조회
+    const q = await db.collection('users').where('username', '==', username).limit(1).get();
+    if (q.empty) throw new Error('not-found');
+    const email = q.docs[0].data().email;
+    await auth.signInWithEmailAndPassword(email, pw);
+    // onAuthStateChanged가 나머지를 처리
+  } catch(err) {
+    e.textContent = '아이디 또는 비밀번호가 올바르지 않아요';
+    e.style.display = 'block';
+    btn.disabled = false; btn.textContent = '로그인';
+    document.getElementById('lpw').value = '';
+  }
+}
+
+async function doRegister(isFirst) {
+  const username = document.getElementById('rid').value.trim();
+  const pw = document.getElementById('rpw').value;
+  const pw2 = document.getElementById('rpw2').value;
+  const e = document.getElementById('ae');
+  e.style.display = 'none';
+  if (!username) { e.textContent = '아이디를 입력해주세요'; e.style.display = 'block'; return; }
+  if (pw.length < 6) { e.textContent = '비밀번호는 6자 이상이어야 해요'; e.style.display = 'block'; return; }
+  if (pw !== pw2) { e.textContent = '비밀번호가 일치하지 않아요'; e.style.display = 'block'; return; }
+  const btn = document.getElementById('regBtn');
+  btn.disabled = true; btn.textContent = '처리 중...';
+  isRegistering = true;
+  try {
+    // 아이디 중복 확인
+    const q = await db.collection('users').where('username', '==', username).limit(1).get();
+    if (!q.empty) { e.textContent = '이미 사용 중인 아이디예요'; e.style.display = 'block'; btn.disabled = false; btn.textContent = '계정 만들기'; isRegistering = false; return; }
+    // 첫 번째 유저 여부
+    const usersSnap = await db.collection('users').limit(1).get();
+    const willBeMaster = usersSnap.empty;
+    // Firebase Auth 생성 (내부 fake 이메일 사용)
+    const fakeEmail = `u${Date.now()}${Math.random().toString(36).slice(2,6)}@taeju.repair`;
+    const cred = await auth.createUserWithEmailAndPassword(fakeEmail, pw);
+    // Firestore 유저 문서 저장
+    const userData = { username, email: fakeEmail, isMaster: willBeMaster, canDelete: willBeMaster, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+    await db.collection('users').doc(cred.user.uid).set(userData);
+    // 직접 앱 진입
+    currentUser = { uid: cred.user.uid, ...userData };
+    isRegistering = false;
+    await enterApp();
+  } catch(err) {
+    console.error(err);
+    e.textContent = '계정 생성에 실패했어요. 다시 시도해주세요.';
+    e.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = isFirst ? '마스터 계정 만들기' : '계정 만들기';
+    isRegistering = false;
+  }
+}
+
+// ═══════════════════════════════════════
+// 앱 진입
+// ═══════════════════════════════════════
+async function enterApp() {
+  document.getElementById('authScr').style.display = 'none';
+  document.getElementById('appScr').style.display = 'flex';
+  // 유저 칩 설정
+  const chip = document.getElementById('userChip');
+  chip.textContent = currentUser.username;
+  chip.className = 'user-chip' + (currentUser.isMaster ? ' master' : '');
+  // 즐겨찾기 태그 로드
+  try {
+    const fDoc = await db.collection('users').doc(currentUser.uid).collection('prefs').doc('favTags').get();
+    favTags = fDoc.exists ? (fDoc.data().tags || []) : [];
+  } catch(e) { favTags = []; }
+  // 기록 실시간 구독
+  subscribeRecords();
+  showLoading(false);
+}
+
+function subscribeRecords() {
+  if (unsubRecords) unsubRecords();
+  unsubRecords = db.collection('records')
+    .orderBy('date', 'desc')
+    .onSnapshot(snap => {
+      records = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      render();
+    }, err => console.error('Records error:', err));
+}
+
+// ═══════════════════════════════════════
+// 이미지 / 썸네일 유틸
+// ═══════════════════════════════════════
+async function uploadFile(file, path) {
+  const ref = storage.ref(path);
+  await ref.put(file);
+  return await ref.getDownloadURL();
+}
+
+async function generateAndUploadThumb(previewUrl, recordId) {
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'), M = 320;
+      const ratio = Math.min(M / img.width, M / img.height);
+      c.width = img.width * ratio; c.height = img.height * ratio;
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(async blob => {
+        try {
+          const path = `thumbs/${recordId}.jpg`;
+          const ref = storage.ref(path);
+          await ref.put(blob);
+          res(await ref.getDownloadURL());
+        } catch(e) { res(null); }
+      }, 'image/jpeg', 0.75);
+    };
+    img.onerror = () => res(null);
+    img.src = previewUrl;
+  });
+}
+
+// ═══════════════════════════════════════
+// 검색 / 정렬 / 필터
+// ═══════════════════════════════════════
+function getQ() { return (document.getElementById('searchInput')?.value || '').trim().toLowerCase().replace(/^#/, ''); }
+function filteredTags(q) {
+  const cnt = {}; records.forEach(r => (r.tags||[]).forEach(t => { cnt[t]=(cnt[t]||0)+1; }));
+  const all = Object.entries(cnt).sort((a,b) => b[1]-a[1]);
+  return q ? all.filter(([t]) => t.toLowerCase().includes(q)) : all;
+}
+function applySort(arr) {
+  const a = [...arr];
+  if (sortMode==='newest') return a.sort((x,y) => (y.date||'').localeCompare(x.date||''));
+  if (sortMode==='oldest') return a.sort((x,y) => (x.date||'').localeCompare(y.date||''));
+  if (sortMode==='model') return a.sort((x,y) => (x.model||'').localeCompare(y.model||'','ko'));
+  if (sortMode==='assignee') return a.sort((x,y) => (x.assignee||'').localeCompare(y.assignee||'','ko'));
+  return a;
+}
+function filteredRecords(q, tagFilter) {
+  let base = tagFilter ? records.filter(r => (r.tags||[]).includes(tagFilter)) : records;
+  if (q) base = base.filter(r =>
+    (r.model||'').toLowerCase().includes(q) ||
+    (r.tags||[]).join(' ').toLowerCase().includes(q) ||
+    (r.firstText||'').toLowerCase().includes(q) ||
+    (r.assignee||'').toLowerCase().includes(q)
+  );
+  return applySort(base);
+}
+function setSort(s) { sortMode = s; render(); }
+
+// ═══════════════════════════════════════
+// 렌더링
+// ═══════════════════════════════════════
+function esc(s) { return String(s).replace(/'/g, "\\'"); }
+function fd(d) { if (!d) return ''; return new Date(d).toLocaleDateString('ko-KR', {month:'short', day:'numeric'}); }
+function hl(text, q) {
+  if (!q || !text) return text || '';
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx < 0) return text;
+  return text.slice(0,idx) + '<span class="hl">' + text.slice(idx, idx+q.length) + '</span>' + text.slice(idx+q.length);
+}
+const TICO = {액정:'ti-device-mobile',배터리:'ti-battery-charging',충전:'ti-plug',카메라:'ti-camera',스피커:'ti-volume',마이크:'ti-microphone',수분:'ti-droplet',기판:'ti-cpu',삼성:'ti-device-mobile',애플:'ti-brand-apple',아이폰:'ti-brand-apple',갤럭시:'ti-device-mobile',픽셀:'ti-brand-google',후면:'ti-square-rounded',버튼:'ti-square'};
+function ticon(t) { const k = Object.keys(TICO).find(k => t.includes(k)); return k ? TICO[k] : 'ti-hash'; }
+
+function render() {
+  if (!currentUser) return;
+  const m = document.getElementById('main'), bb = document.getElementById('backBtn'), ht = document.getElementById('hdrTitle');
+  if (view === 'home') { bb.classList.remove('on'); ht.textContent = APP; renderHome(m); }
+  else { bb.classList.add('on'); ht.textContent = activeTag ? '#'+activeTag : '전체 기록'; renderRecs(m); }
+}
+function onSearch() { render(); }
+function sortUI() {
+  const labels = {newest:'최신순',oldest:'오래된순',model:'모델명순',assignee:'담당자순'};
+  return `<div class="sort-row">${Object.entries(labels).map(([k,v])=>`<button class="sort-btn${sortMode===k?' on':''}" onclick="setSort('${k}')">${v}</button>`).join('')}</div>`;
+}
+function renderHome(el) {
+  const q = getQ(), tags = filteredTags(q), searchRecs = q ? filteredRecords(q,null) : [], recent = !q ? applySort(records).slice(0,4) : [];
+  if (!tags.length && !searchRecs.length && !recent.length) {
+    el.innerHTML = `<div class="empty"><i class="ti ti-device-mobile"></i><p>아직 수리 기록이 없어요.<br>추가 버튼으로 시작해보세요.</p></div>`; return;
+  }
+  let html = '';
+  if (tags.length) html += `<div class="slabel">태그 아카이브</div><div class="tag-grid">${tags.map(([t,c])=>`<div class="tag-tile" onclick="openTag('${esc(t)}')"><div class="tico"><i class="ti ${ticon(t)}"></i></div><span class="tname">${q?hl('#'+t,'#'+q):'#'+t}</span><span class="tcnt">${c}</span></div>`).join('')}</div>`;
+  if (q && searchRecs.length) html += `<div class="search-divider"><span>기록 ${searchRecs.length}건</span></div>${sortUI()}<div class="rlist">${searchRecs.map(r=>rcHTML(r,q)).join('')}</div>`;
+  else if (q && !searchRecs.length && !tags.length) html += `<div class="no-result"><i class="ti ti-search-off" style="font-size:30px;display:block;margin-bottom:8px;opacity:.3"></i>"${q}"에 해당하는 결과가 없어요</div>`;
+  if (!q && recent.length) html += `<div style="margin-top:${tags.length?20:0}px"><div class="slabel" style="display:flex;align-items:center;justify-content:space-between">최근 기록${records.length>4?`<button onclick="openAll()" style="font-family:var(--font);font-size:12px;font-weight:600;color:var(--accent);background:none;border:none;cursor:pointer">전체보기 →</button>`:''}</div>${sortUI()}<div class="rlist">${recent.map(r=>rcHTML(r,'')).join('')}</div></div>`;
+  el.innerHTML = html;
+}
+function renderRecs(el) {
+  const q = getQ(), items = filteredRecords(q, activeTag);
+  if (!items.length) { el.innerHTML = `<div class="empty"><i class="ti ti-file-off"></i><p>기록이 없습니다.</p></div>`; return; }
+  el.innerHTML = `<div class="slabel">${items.length}건</div>${sortUI()}<div class="rlist">${items.map(r=>rcHTML(r,q)).join('')}</div>`;
+}
+function rcHTML(r, q) {
+  const model = q ? hl(r.model||'모델 미입력',q) : r.model||'모델 미입력';
+  const exc = r.firstText ? (q ? hl(r.firstText,q) : r.firstText) : '';
+  return `<div class="rcard" onclick="openDetail('${r.id}')">
+    ${r.thumbUrl ? `<img class="rc-img" src="${r.thumbUrl}" alt="">` : ''}
+    <div class="rc-body">
+      <div class="rc-top"><div class="rc-model">${model}</div>${r.assignee?`<span class="rc-assignee">${r.assignee}</span>`:''}</div>
+      ${exc ? `<div class="rc-exc">${exc}</div>` : ''}
+      <div class="rc-foot"><div class="rc-tags">${(r.tags||[]).map(t=>`<span class="pill">${q?hl('#'+t,'#'+q):'#'+t}</span>`).join('')}</div><span class="rc-date">${fd(r.date)}</span></div>
+    </div>
+  </div>`;
+}
+function openTag(t) { activeTag=t; view='records'; render(); }
+function openAll() { activeTag=null; view='records'; render(); }
+function goHome() { activeTag=null; view='home'; render(); }
+
+// ═══════════════════════════════════════
+// 즐겨찾기 태그
+// ═══════════════════════════════════════
+async function saveFavs() {
+  if (!currentUser) return;
+  try { await db.collection('users').doc(currentUser.uid).collection('prefs').doc('favTags').set({ tags: favTags }); } catch(e) {}
+}
+function getQuickTags() {
+  const cnt = {}; records.forEach(r => (r.tags||[]).forEach(t => { cnt[t]=(cnt[t]||0)+1; }));
+  const starred = favTags.filter(t => !aTags.includes(t));
+  const byFreq = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([t])=>t).filter(t=>!favTags.includes(t)&&!aTags.includes(t));
+  return [...starred,...byFreq].slice(0,12);
+}
+function toggleFav(t) { if(favTags.includes(t)) favTags=favTags.filter(x=>x!==t); else favTags=[...favTags,t]; saveFavs(); renderFavRow(); }
+function pickFavTag(t) { if(aTags.includes(t))return; aTags.push(t); renderTChips(); renderFavRow(); }
+function renderFavRow() {
+  const el = document.getElementById('favRow'); if (!el) return;
+  const q = getQuickTags();
+  if (!q.length) { el.innerHTML = `<span style="font-size:11px;color:var(--hint)">태그를 추가하면 여기 표시돼요</span>`; return; }
+  el.innerHTML = q.map(t => { const isFav=favTags.includes(t),isUsed=aTags.includes(t); return `<button class="fav-btn${isUsed?' used':''}" onclick="pickFavTag('${esc(t)}')"><i class="ti ${ticon(t)}"></i>#${t}<button class="fav-star${isFav?' on':''}" onclick="event.stopPropagation();toggleFav('${esc(t)}')"><i class="ti ${isFav?'ti-star-filled':'ti-star'}"></i></button></button>`; }).join('');
+}
+function tagKey(e) {
+  const inp=document.getElementById('tfield'), v=inp.value.replace(/^#/,'').replace(/,/g,'').trim();
+  if((e.key==='Enter'||e.key===',')&&v){e.preventDefault();if(!aTags.includes(v)){aTags.push(v);renderTChips();renderFavRow();}inp.value='';}
+  else if(e.key==='Backspace'&&!inp.value&&aTags.length){aTags.pop();renderTChips();renderFavRow();}
+}
+function renderTChips() { const el=document.getElementById('tchips'); if(el) el.innerHTML=aTags.map((t,i)=>`<span class="tchip">#${t}<button onclick="rmTag(${i})">×</button></span>`).join(''); }
+function rmTag(i) { aTags.splice(i,1); renderTChips(); renderFavRow(); }
+
+// ═══════════════════════════════════════
+// 추가 / 수정 폼
+// ═══════════════════════════════════════
+function openAdd() { aBlks=[]; aTags=[]; editingId=null; openForm(null); }
+function openEdit(id) {
+  const rec = records.find(r => r.id===id); if (!rec) return;
+  editingId=id; aBlks=(rec.blocks||[]).map(b=>({...b})); aTags=[...(rec.tags||[])]; openForm(rec);
+}
+function openForm(rec) {
+  document.getElementById('overlay').classList.add('on');
+  const allA = [...new Set(records.map(r=>r.assignee).filter(Boolean))];
+  const aOpts = allA.length ? `<datalist id="aList">${allA.map(a=>`<option value="${a}">`).join('')}</datalist>` : '';
+  document.getElementById('sheet').innerHTML = `<div class="sh-handle"></div>
+  <div class="sh-title">${rec?'수리 기록 수정':'수리 기록 추가'} <button class="btn-x" onclick="closeSheet()"><i class="ti ti-x"></i></button></div>
+  <div class="frow">
+    <div class="fl"><label>제조사</label><select id="fmk"><option${rec?.model?.startsWith('Samsung')?' selected':''}>Samsung</option><option${rec?.model?.startsWith('Apple')?' selected':''}>Apple</option><option${rec?.model?.startsWith('LG')?' selected':''}>LG</option><option${rec?.model?.startsWith('Xiaomi')?' selected':''}>Xiaomi</option><option${rec?.model?.startsWith('Google')?' selected':''}>Google</option><option>기타</option></select></div>
+    <div class="fl"><label>모델명</label><input type="text" id="fmd" placeholder="S24, iPhone 15 ..." value="${rec?rec.model?.split(' ').slice(1).join(' ')||'':''}"></div>
+  </div>
+  <div class="fl"><label>담당자</label>${aOpts}<input type="text" id="fassignee" placeholder="담당자 이름" value="${rec?.assignee||currentUser.username}" list="aList"></div>
+  <div class="fl"><label>해시태그</label>
+    <div class="tag-wrap" onclick="document.getElementById('tfield').focus()"><span id="tchips"></span><input class="tag-field" id="tfield" placeholder="#태그 입력 후 Enter"></div>
+    <div class="fav-row" id="favRow"></div>
+    <p class="hint" style="margin-top:5px">★ 별표로 즐겨찾기 · 버튼 클릭으로 빠르게 추가</p>
+  </div>
+  <div class="fl"><label>본문</label><div class="block-list" id="blist"></div>
+    <div class="add-blk-row">
+      <button class="btn-blk" onclick="addImgBlk()"><i class="ti ti-photo-plus"></i> 이미지</button>
+      <button class="btn-blk" onclick="addTxtBlk()"><i class="ti ti-text-plus"></i> 텍스트</button>
+    </div>
+  </div>
+  <button class="btn-save" id="saveBtn" onclick="submitForm()">${rec?'<i class="ti ti-check"></i> 수정 완료':'<i class="ti ti-device-floppy"></i> 저장하기'}</button>`;
+  document.getElementById('tfield').addEventListener('keydown', tagKey);
+  renderTChips(); renderFavRow(); renderBlks();
+}
+function renderBlks() {
+  const el = document.getElementById('blist'); if (!el) return;
+  el.innerHTML = aBlks.map((b,i) => `<div class="blk" data-i="${i}">
+    ${b.type==='image' ? `<img src="${b.previewUrl||b.url||''}" alt="">` : `<textarea onchange="aBlks[${i}].content=this.value" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" placeholder="텍스트를 입력하세요...">${b.content||''}</textarea>`}
+    <button class="blk-del" onclick="rmBlk(${i})"><i class="ti ti-x"></i></button>
+  </div>`).join('');
+  el.querySelectorAll('textarea').forEach(t => { t.style.height='auto'; t.style.height=t.scrollHeight+'px'; });
+}
+function addImgBlk() {
+  const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*';
+  inp.onchange = e => { const f=e.target.files[0]; if(!f) return; aBlks.push({type:'image',file:f,previewUrl:URL.createObjectURL(f)}); renderBlks(); };
+  inp.click();
+}
+function addTxtBlk() { aBlks.push({type:'text',content:''}); renderBlks(); setTimeout(()=>{const ts=document.querySelectorAll('.blk textarea');if(ts.length)ts[ts.length-1].focus();},50); }
+function rmBlk(i) { if(aBlks[i].previewUrl&&aBlks[i].file) URL.revokeObjectURL(aBlks[i].previewUrl); aBlks.splice(i,1); renderBlks(); }
+
+async function submitForm() {
+  // textarea 내용 수집
+  document.querySelectorAll('.blk[data-i] textarea').forEach(ta => { const i=parseInt(ta.closest('[data-i]').dataset.i); if(aBlks[i]) aBlks[i].content=ta.value; });
+  const ti = document.getElementById('tfield'); if(ti){const v=ti.value.replace(/^#/,'').replace(/,/g,'').trim();if(v&&!aTags.includes(v))aTags.push(v);}
+  const maker=document.getElementById('fmk')?.value, modelPart=document.getElementById('fmd')?.value.trim();
+  const model=[maker,modelPart].filter(Boolean).join(' ');
+  const assignee=document.getElementById('fassignee')?.value.trim()||currentUser.username;
+  const btn=document.getElementById('saveBtn'); btn.disabled=true; btn.textContent='저장 중...';
+  showLoading(true,'이미지 업로드 중...');
+  try {
+    const recordId = editingId || db.collection('records').doc().id;
+    const processedBlocks = [];
+    let thumbUrl = editingId ? (records.find(r=>r.id===editingId)?.thumbUrl||null) : null;
+    let firstNewImgPreview = null;
+    for (let i=0; i<aBlks.length; i++) {
+      const b=aBlks[i];
+      if (b.type==='image') {
+        if (b.file) {
+          // 새 이미지 → Storage 업로드
+          const path=`images/${recordId}/${Date.now()}_${i}.jpg`;
+          const url=await uploadFile(b.file, path);
+          processedBlocks.push({type:'image',url,path});
+          if (!firstNewImgPreview) firstNewImgPreview=b.previewUrl;
+        } else {
+          processedBlocks.push({type:'image',url:b.url,path:b.path||''});
+        }
+      } else {
+        processedBlocks.push({type:'text',content:b.content||''});
+      }
+    }
+    // 썸네일 생성 (새 이미지가 있을 때)
+    if (firstNewImgPreview) {
+      showLoading(true,'썸네일 생성 중...');
+      const url=await generateAndUploadThumb(firstNewImgPreview, recordId);
+      if (url) thumbUrl=url;
+    }
+    const firstText=(processedBlocks.find(b=>b.type==='text')?.content||'').slice(0,120);
+    const now=new Date().toISOString();
+    showLoading(true,'저장 중...');
+    if (editingId) {
+      await db.collection('records').doc(editingId).update({model,assignee,tags:[...aTags],blocks:processedBlocks,thumbUrl,firstText,updatedAt:now});
+    } else {
+      await db.collection('records').doc(recordId).set({model,assignee,tags:[...aTags],blocks:processedBlocks,thumbUrl,firstText,date:now,updatedAt:null,createdBy:currentUser.uid});
+    }
+    editingId=null; closeSheet();
+  } catch(err) {
+    console.error('Save error:',err);
+    alert('저장에 실패했어요: '+err.message);
+    btn.disabled=false; btn.textContent='저장하기';
+  } finally {
+    showLoading(false);
+  }
+}
+
+// ═══════════════════════════════════════
+// 상세 보기
+// ═══════════════════════════════════════
+function openDetail(id) {
+  const rec=records.find(r=>r.id===id); if(!rec) return;
+  document.getElementById('overlay').classList.add('on');
+  const canDel=currentUser.isMaster||currentUser.canDelete;
+  document.getElementById('sheet').innerHTML = `<div class="sh-handle"></div>
+  <div class="sh-title">${rec.model||'수리 기록'} <button class="btn-x" onclick="closeSheet()"><i class="ti ti-x"></i></button></div>
+  ${(rec.tags||[]).length?`<div class="det-tags">${rec.tags.map(t=>`<span class="pill">#${t}</span>`).join('')}</div>`:''}
+  <div class="det-meta">
+    <span class="det-meta-item"><i class="ti ti-calendar"></i>${fd(rec.date)}</span>
+    ${rec.assignee?`<span class="det-meta-item"><i class="ti ti-user"></i>${rec.assignee}</span>`:''}
+    ${rec.updatedAt?`<span class="det-meta-item"><i class="ti ti-pencil"></i>수정됨</span>`:''}
+  </div>
+  ${(rec.blocks||[]).map(b=>`<div class="vblk">${b.type==='image'?`<img src="${b.url}" alt="" onclick="window.open('${b.url}','_blank')" title="클릭하면 원본 크기로 열려요">`:b.content?`<p>${b.content}</p>`:''}</div>`).join('')}
+  <div class="btn-row">
+    <button class="btn-edit" onclick="closeSheet();openEdit('${id}')"><i class="ti ti-pencil"></i> 수정</button>
+    ${canDel?`<button class="btn-del" onclick="doDel('${id}')"><i class="ti ti-trash"></i> 삭제</button>`:`<button class="btn-del" disabled style="opacity:.35;cursor:not-allowed"><i class="ti ti-lock"></i> 권한 없음</button>`}
+  </div>`;
+}
+
+async function doDel(id) {
+  if (!confirm('이 기록을 삭제할까요?')) return;
+  showLoading(true,'삭제 중...');
+  try {
+    const rec=records.find(r=>r.id===id);
+    if (rec) {
+      for (const b of (rec.blocks||[])) { if(b.type==='image'&&b.path){try{await storage.ref(b.path).delete();}catch(e){}} }
+      try{ await storage.ref(`thumbs/${id}.jpg`).delete(); }catch(e){}
+    }
+    await db.collection('records').doc(id).delete();
+    closeSheet();
+  } catch(err) { alert('삭제에 실패했어요.'); }
+  finally { showLoading(false); }
+}
+
+// ═══════════════════════════════════════
+// 설정
+// ═══════════════════════════════════════
+function openSettings() { document.getElementById('overlay').classList.add('on'); renderSettings(); }
+
+async function renderSettings() {
+  let usersHTML = '';
+  if (currentUser.isMaster) {
+    try {
+      const snap=await db.collection('users').orderBy('createdAt','asc').get();
+      const allUsers=snap.docs.map(d=>({uid:d.id,...d.data()}));
+      usersHTML=`<div class="set-section"><div class="set-section-title"><i class="ti ti-users"></i>사용자 관리</div>
+        ${allUsers.map(u=>`<div class="user-row">
+          <span class="u-name">${u.username}</span>
+          <span class="u-badge ${u.isMaster?'master':'user'}">${u.isMaster?'마스터':'사용자'}</span>
+          ${!u.isMaster?`<label class="u-toggle"><input type="checkbox" ${u.canDelete?'checked':''} onchange="toggleDeletePerm('${u.uid}',this.checked)"> 삭제 권한</label><button class="u-del" onclick="removeUser('${u.uid}','${esc(u.username)}')"><i class="ti ti-trash"></i></button>`:''}
+        </div>`).join('')}
+      </div><div class="sep"></div>`;
+    } catch(e) {}
+  }
+  document.getElementById('sheet').innerHTML = `<div class="sh-handle"></div>
+  <div class="sh-title">설정 <button class="btn-x" onclick="closeSheet()"><i class="ti ti-x"></i></button></div>
+  <div class="set-info"><i class="ti ti-user-circle" style="color:var(--accent);font-size:18px"></i>
+    <span><strong>${currentUser.username}</strong> 로그인 중 ${currentUser.isMaster?'<span style="font-size:11px;color:var(--master);font-weight:700">마스터</span>':''}</span>
+  </div>
+  ${usersHTML}
+  <div class="set-section">
+    <div class="set-section-title"><i class="ti ti-lock"></i>비밀번호 변경</div>
+    <div class="fl"><label>현재 비밀번호</label><input type="password" id="cp" placeholder="현재 비밀번호"></div>
+    <div class="fl"><label>새 비밀번호</label><input type="password" id="np1" placeholder="새 비밀번호 (6자 이상)"></div>
+    <div class="fl"><label>새 비밀번호 확인</label><input type="password" id="np2" placeholder="재입력"></div>
+    <div id="cperr" class="auth-err"></div><div id="cpok" class="auth-ok"></div>
+    <button class="btn-save" onclick="doChPass()">비밀번호 변경</button>
+  </div>
+  <button class="btn-del-full" onclick="doLogout()"><i class="ti ti-logout"></i> 로그아웃</button>`;
+}
+
+async function toggleDeletePerm(uid, val) {
+  try {
+    await db.collection('users').doc(uid).update({canDelete:val});
+    if (uid===currentUser.uid) currentUser.canDelete=val;
+  } catch(e) { alert('권한 변경에 실패했어요.'); }
+}
+
+async function removeUser(uid, username) {
+  if (!confirm(`'${username}' 계정을 삭제할까요?`)) return;
+  try { await db.collection('users').doc(uid).delete(); renderSettings(); }
+  catch(e) { alert('계정 삭제에 실패했어요.'); }
+}
+
+async function doChPass() {
+  const c=document.getElementById('cp').value, n1=document.getElementById('np1').value, n2=document.getElementById('np2').value;
+  const e=document.getElementById('cperr'), o=document.getElementById('cpok');
+  e.style.display='none'; o.style.display='none';
+  if (!c) { e.textContent='현재 비밀번호를 입력해주세요'; e.style.display='block'; return; }
+  if (n1.length<6) { e.textContent='새 비밀번호는 6자 이상이어야 해요'; e.style.display='block'; return; }
+  if (n1!==n2) { e.textContent='비밀번호가 일치하지 않아요'; e.style.display='block'; return; }
+  try {
+    const user=auth.currentUser;
+    const cred=firebase.auth.EmailAuthProvider.credential(user.email, c);
+    await user.reauthenticateWithCredential(cred);
+    await user.updatePassword(n1);
+    o.textContent='비밀번호가 변경됐어요!'; o.style.display='block';
+    ['cp','np1','np2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  } catch(err) { e.textContent='현재 비밀번호가 올바르지 않아요'; e.style.display='block'; }
+}
+
+function doLogout() {
+  if (unsubRecords) { unsubRecords(); unsubRecords=null; }
+  currentUser=null; records=[]; favTags=[];
+  auth.signOut(); closeSheet();
+}
+
+function closeSheet() { document.getElementById('overlay').classList.remove('on'); }
+function bgClick(e) { if(e.target===document.getElementById('overlay')) closeSheet(); }
+</script>
+</body>
+</html>
