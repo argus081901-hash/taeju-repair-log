@@ -99,7 +99,7 @@ body{background:var(--bg);font-family:var(--font);color:var(--text);min-height:1
 .back-btn.on{display:flex}
 .hdr-logo{height:24px;object-fit:contain;flex-shrink:0;cursor:pointer}
 .hdr-title{font-size:14px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}
-.search-wrap{flex:1;display:flex;align-items:center;gap:6px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:0 10px;transition:all .15s}
+.search-wrap{flex:1;max-width:360px;display:flex;align-items:center;gap:6px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:0 10px;transition:all .15s}
 .search-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.1);background:#fff}
 .search-wrap i{font-size:15px;color:var(--hint);flex-shrink:0}
 .search-input{flex:1;border:none;background:transparent;font-family:var(--font);font-size:13px;color:var(--text);outline:none;padding:7px 0;min-width:0}
@@ -823,7 +823,7 @@ function renderDetailHTML(r){
     ${r.assignee?`<span class="det-meta-item"><i class="ti ti-user"></i>${r.assignee}</span>`:''}
     ${r.updatedAt?`<span class="det-meta-item"><i class="ti ti-pencil"></i>수정됨</span>`:''}
   </div>
-  ${(r.blocks||[]).map((b,bi)=>`<div class="vblk">${b.type==='image'?`<div class="vblk-img-wrap" style="text-align:center"><img id="vimg_${bi}" src="${b.url}" alt="" style="width:100%;max-height:none;object-fit:contain;border-radius:13px;border:1px solid var(--border);display:inline-block;cursor:zoom-in;transition:width .2s" onclick="window.open('${b.url}','_blank')"><button class="img-copy-btn" onclick="copyImg('${b.url}')"><i class="ti ti-copy"></i> 복사</button></div><div class="img-size-bar">${['S','M','L','전체'].map(s=>`<button class="img-size-btn${s==='전체'?' on':''}" onclick="setImgSize(this,'vimg_${bi}','${s}')">${s}</button>`).join('')}</div>`:b.content?`<p>${b.content}</p>`:''}</div>`).join('')}
+  ${(r.blocks||[]).map((b,bi)=>`<div class="vblk">${b.type==='image'?`<div class="vblk-img-wrap" style="text-align:center"><img id="vimg_${bi}" src="${b.url}" alt="" style="width:50%;max-height:none;object-fit:contain;border-radius:13px;border:1px solid var(--border);display:inline-block;cursor:zoom-in;transition:width .2s" onclick="window.open('${b.url}','_blank')"><button class="img-copy-btn" onclick="copyImg('${b.url}')"><i class="ti ti-copy"></i> 복사</button></div><div class="img-size-bar">${['S','M','L','전체'].map(s=>`<button class="img-size-btn${s==='M'?' on':''}" onclick="setImgSize(this,'vimg_${bi}','${s}')">${s}</button>`).join('')}</div>`:b.content?`<p>${b.content}</p>`:''}</div>`).join('')}
   <div class="det-btn-row">
     <button class="btn-edit" onclick="openEdit('${r.id}')"><i class="ti ti-pencil"></i> 수정</button>
     ${canDel?`<button class="btn-del" onclick="doDel('${r.id}')"><i class="ti ti-trash"></i> 삭제</button>`:`<button class="btn-del" disabled style="opacity:.3;cursor:not-allowed"><i class="ti ti-lock"></i> 권한 없음</button>`}
