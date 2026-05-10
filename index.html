@@ -342,7 +342,7 @@ select option{background:var(--white)}
   </div>
   <div class="sb-item" id="sideTabGuides" onclick="setBoard('guides')" style="margin: 0 10px 4px; padding: 12px 10px;">
     <div class="sb-ico"><i class="ti ti-notebook"></i></div>
-    <div class="sb-name" style="font-weight: 700;">가이드 게시판</div>
+    <div class="sb-name" style="font-weight: 700;">가이드</div>
   </div>
   <div class="sb-sort">
     <div class="sb-sort-label">정렬</div>
@@ -1045,7 +1045,7 @@ function setBoard(boardType) {
   
   // 1. 헤더 타이틀 변경
   const ht = document.getElementById('hdrTitle');
-  if(ht) ht.textContent = boardType === 'records' ? '수리 일지' : '가이드 게시판';
+  if(ht) ht.textContent = boardType === 'records' ? '수리 일지' : '가이드';
   
   // 2. 사이드바 메뉴 활성화 시각화 (기존 코드의 sb-item 스타일 활용)
   const recTab = document.getElementById('sideTabRecords');
@@ -1060,7 +1060,7 @@ function setBoard(boardType) {
   // 4. 메뉴 클릭 후 사이드바 자동으로 닫기
   if(typeof closeSidebar === 'function') closeSidebar();
   
-  toast(boardType === 'records' ? '수리 일지로 이동했습니다.' : '가이드 게시판으로 이동했습니다.');
+  toast(boardType === 'records' ? '수리 일지로 이동했습니다.' : '가이드로 이동했습니다.');
 }
   
 /* ========== [추가] 캔버스 그리기(마크업) 로직 ========== */
