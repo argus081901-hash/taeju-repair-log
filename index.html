@@ -238,7 +238,16 @@ auth.onAuthStateChanged(async (fireUser) => {
     try {
       const doc = await db.collection('users').doc(fireUser.uid).get();
       if (doc.exists) {
-        currentUser = { uid: fireUser.uid, ...doc.data() };
+        const userData = doc.data();
+        // 승인 대기 계정은 앱 진입 차단
+        if (userData.status === 'pending') {
+          await auth.signOut();
+          showAuthScreen();
+          showLogin('⏳ 아직 마스터 승인 전이에요. 승인 후 다시 로그인해주세요.');
+          showLoading(false);
+          return;
+        }
+        currentUser = { uid: fireUser.uid, ...userData };
         await enterApp();
       } else {
         await auth.signOut();
@@ -317,7 +326,15 @@ async function doLogin() {
     // 아이디로 이메일 조회
     const q = await db.collection('users').where('username', '==', username).limit(1).get();
     if (q.empty) throw new Error('not-found');
-    const email = q.docs[0].data().email;
+    const userData = q.docs[0].data();
+    // 승인 대기 중인 계정 차단
+    if (userData.status === 'pending') {
+      e.textContent = '⏳ 아직 마스터 승인 전이에요. 승인 후 다시 로그인해주세요.';
+      e.style.display = 'block';
+      btn.disabled = false; btn.textContent = '로그인';
+      return;
+    }
+    const email = userData.email;
     await auth.signInWithEmailAndPassword(email, pw);
     // onAuthStateChanged가 나머지를 처리
   } catch(err) {
@@ -351,12 +368,20 @@ async function doRegister(isFirst) {
     const fakeEmail = `u${Date.now()}${Math.random().toString(36).slice(2,6)}@taeju.repair`;
     const cred = await auth.createUserWithEmailAndPassword(fakeEmail, pw);
     // Firestore 유저 문서 저장
-    const userData = { username, email: fakeEmail, isMaster: willBeMaster, canDelete: willBeMaster, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+    const status = willBeMaster ? 'approved' : 'pending';
+    const userData = { username, email: fakeEmail, isMaster: willBeMaster, canDelete: willBeMaster, status, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
     await db.collection('users').doc(cred.user.uid).set(userData);
-    // 직접 앱 진입
-    currentUser = { uid: cred.user.uid, ...userData };
     isRegistering = false;
-    await enterApp();
+    if (willBeMaster) {
+      // 마스터는 바로 앱 진입
+      currentUser = { uid: cred.user.uid, ...userData };
+      await enterApp();
+    } else {
+      // 일반 사용자는 승인 대기 화면
+      await auth.signOut();
+      showAuthScreen();
+      showLogin('✅ 가입 신청이 완료됐어요!<br>마스터 승인 후 로그인이 가능합니다.');
+    }
   } catch(err) {
     console.error(err);
     e.textContent = '계정 생성에 실패했어요. 다시 시도해주세요.';
@@ -654,7 +679,7 @@ async function submitForm() {
 function openDetail(id) {
   const rec=records.find(r=>r.id===id); if(!rec) return;
   document.getElementById('overlay').classList.add('on');
-  const canDel=currentUser.isMaster||currentUser.canDelete;
+  const canDel = currentUser.isMaster;
   document.getElementById('sheet').innerHTML = `<div class="sh-handle"></div>
   <div class="sh-title">${rec.model||'수리 기록'} <button class="btn-x" onclick="closeSheet()"><i class="ti ti-x"></i></button></div>
   ${(rec.tags||[]).length?`<div class="det-tags">${rec.tags.map(t=>`<span class="pill">#${t}</span>`).join('')}</div>`:''}
@@ -691,25 +716,45 @@ async function doDel(id) {
 function openSettings() { document.getElementById('overlay').classList.add('on'); renderSettings(); }
 
 async function renderSettings() {
+  let pendingHTML = '';
   let usersHTML = '';
   if (currentUser.isMaster) {
     try {
-      const snap=await db.collection('users').orderBy('createdAt','asc').get();
-      const allUsers=snap.docs.map(d=>({uid:d.id,...d.data()}));
-      usersHTML=`<div class="set-section"><div class="set-section-title"><i class="ti ti-users"></i>사용자 관리</div>
-        ${allUsers.map(u=>`<div class="user-row">
+      const snap = await db.collection('users').orderBy('createdAt','asc').get();
+      const allUsers = snap.docs.map(d => ({uid:d.id,...d.data()}));
+      const pending = allUsers.filter(u => u.status === 'pending');
+      const approved = allUsers.filter(u => u.status !== 'pending');
+
+      // 승인 대기 섹션
+      if (pending.length) {
+        pendingHTML = `<div class="set-section">
+          <div class="set-section-title" style="color:#D97706"><i class="ti ti-clock"></i>가입 승인 대기 (${pending.length}명)</div>
+          ${pending.map(u=>`<div class="user-row" style="border:1.5px solid #FDE68A">
+            <span class="u-name">${u.username}</span>
+            <span class="u-badge" style="background:#FFFBEB;color:#D97706;border:1px solid #FDE68A">대기중</span>
+            <button onclick="approveUser('${u.uid}')" style="background:var(--accent);color:#fff;border:none;padding:5px 12px;border-radius:8px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0">승인</button>
+            <button class="u-del" onclick="removeUser('${u.uid}','${esc(u.username)}')" title="거절 및 삭제"><i class="ti ti-x"></i></button>
+          </div>`).join('')}
+        </div><div class="sep"></div>`;
+      }
+
+      // 승인된 사용자 섹션
+      usersHTML = `<div class="set-section">
+        <div class="set-section-title"><i class="ti ti-users"></i>사용자 관리</div>
+        ${approved.map(u=>`<div class="user-row">
           <span class="u-name">${u.username}</span>
           <span class="u-badge ${u.isMaster?'master':'user'}">${u.isMaster?'마스터':'사용자'}</span>
-          ${!u.isMaster?`<label class="u-toggle"><input type="checkbox" ${u.canDelete?'checked':''} onchange="toggleDeletePerm('${u.uid}',this.checked)"> 삭제 권한</label><button class="u-del" onclick="removeUser('${u.uid}','${esc(u.username)}')"><i class="ti ti-trash"></i></button>`:''}
+          ${!u.isMaster?`<button class="u-del" onclick="removeUser('${u.uid}','${esc(u.username)}')" title="계정 삭제"><i class="ti ti-trash"></i></button>`:''}
         </div>`).join('')}
       </div><div class="sep"></div>`;
-    } catch(e) {}
+    } catch(e) { console.error(e); }
   }
   document.getElementById('sheet').innerHTML = `<div class="sh-handle"></div>
   <div class="sh-title">설정 <button class="btn-x" onclick="closeSheet()"><i class="ti ti-x"></i></button></div>
   <div class="set-info"><i class="ti ti-user-circle" style="color:var(--accent);font-size:18px"></i>
     <span><strong>${currentUser.username}</strong> 로그인 중 ${currentUser.isMaster?'<span style="font-size:11px;color:var(--master);font-weight:700">마스터</span>':''}</span>
   </div>
+  ${pendingHTML}
   ${usersHTML}
   <div class="set-section">
     <div class="set-section-title"><i class="ti ti-lock"></i>비밀번호 변경</div>
@@ -722,11 +767,11 @@ async function renderSettings() {
   <button class="btn-del-full" onclick="doLogout()"><i class="ti ti-logout"></i> 로그아웃</button>`;
 }
 
-async function toggleDeletePerm(uid, val) {
+async function approveUser(uid) {
   try {
-    await db.collection('users').doc(uid).update({canDelete:val});
-    if (uid===currentUser.uid) currentUser.canDelete=val;
-  } catch(e) { alert('권한 변경에 실패했어요.'); }
+    await db.collection('users').doc(uid).update({ status: 'approved' });
+    renderSettings();
+  } catch(e) { alert('승인에 실패했어요.'); }
 }
 
 async function removeUser(uid, username) {
