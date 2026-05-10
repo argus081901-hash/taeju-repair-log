@@ -322,6 +322,18 @@ select option{background:var(--white)}
 #drawCanvas { position:absolute; cursor:crosshair; }
 .draw-btns { display:flex; gap:10px; }
 .btn-reset { flex:1; background:var(--bg); color:var(--sub); border:none; padding:14px; border-radius:12px; font-weight:700; cursor:pointer; font-family:var(--font); }
+  /* PC: 사이드바 기본 펼침 */
+@media (min-width: 1024px) {
+  .sidebar {
+    transform: translateX(0) !important;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .sb-overlay { display: none !important; }
+  .wrap { flex-direction: row; }
+  .main { margin-left: 0; }
+}
 </style>
 </head>
 <body>
@@ -1171,7 +1183,7 @@ function applyDraw() {
   const dataUrl = drawCanvas.toDataURL('image/jpeg', 0.85);
   const drawnFile = dataURLtoFile(dataUrl, 'markup_' + Date.now() + '.jpg');
 
-  // 한솔님의 블록 배열 시스템에 정식으로 데이터 삽입
+// 한솔님의 블록 배열 시스템에 정식으로 데이터 삽입
   aBlks.push({
     type: 'image',
     file: drawnFile,
@@ -1183,5 +1195,17 @@ function applyDraw() {
   document.getElementById('drawOverlay').classList.remove('on');
 }
 </script>
+
+<script>
+  // PC에서 사이드바 기본 펼침
+  function initSidebar() {
+    if (window.innerWidth >= 1024) {
+      document.querySelector('.sidebar').classList.add('on');
+    }
+  }
+  initSidebar();
+  window.addEventListener('resize', initSidebar);
+</script>
+
 </body>
 </html>
