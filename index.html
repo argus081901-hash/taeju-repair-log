@@ -1185,17 +1185,5 @@ function applyDraw() {
   document.getElementById('drawOverlay').classList.remove('on');
 }
 </script>
-
-<script>
-  // PC에서 사이드바 기본 펼침
-  function initSidebar() {
-    if (window.innerWidth >= 1024) {
-      document.querySelector('.sidebar').classList.add('on');
-    }
-  }
-  initSidebar();
-  window.addEventListener('resize', initSidebar);
-</script>
-
 </body>
 </html>
