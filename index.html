@@ -36,7 +36,7 @@ body{background:var(--bg);font-family:var(--font);color:var(--text);min-height:1
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── Toast ── */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1E293B;color:#fff;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;z-index:1000;white-space:nowrap;pointer-events:none}
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(20px);background:#1E293B;color:#fff;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;z-index:1000;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.ok{background:#059669}
 .toast.err{background:#DC2626}
@@ -99,7 +99,7 @@ body{background:var(--bg);font-family:var(--font);color:var(--text);min-height:1
 .back-btn.on{display:flex}
 .hdr-logo{height:24px;object-fit:contain;flex-shrink:0;cursor:pointer}
 .hdr-title{font-size:14px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}
-.search-wrap{flex:1;max-width:220px;display:flex;align-items:center;gap:6px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:0 10px;transition:all .15s}
+.search-wrap{flex:1;display:flex;align-items:center;gap:6px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:0 10px;transition:all .15s}
 .search-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.1);background:#fff}
 .search-wrap i{font-size:15px;color:var(--hint);flex-shrink:0}
 .search-input{flex:1;border:none;background:transparent;font-family:var(--font);font-size:13px;color:var(--text);outline:none;padding:7px 0;min-width:0}
@@ -110,7 +110,20 @@ body{background:var(--bg);font-family:var(--font);color:var(--text);min-height:1
 .user-chip:hover{border-color:var(--border2)}
 .user-chip.master{background:var(--mb);border-color:#C4B5FD;color:var(--master)}
 
-/* ── Main ── */
+.sb-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.sb-user-info{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:11px;cursor:pointer;transition:all .15s}
+.sb-user-info:hover{background:var(--al)}
+.sb-user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--am));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-user-name{font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-user-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--mb);color:var(--master);flex-shrink:0}
+.sb-add-btn{background:var(--accent);color:#fff;border:none;padding:11px;border-radius:11px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;box-shadow:0 2px 8px rgba(99,102,241,.25)}
+.sb-add-btn:hover{background:var(--ah);box-shadow:0 4px 12px rgba(99,102,241,.35)}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:24px;right:20px;width:54px;height:54px;background:var(--accent);color:#fff;border:none;border-radius:50%;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(99,102,241,.45);z-index:50;transition:all .2s;outline:none}
+.fab:hover{background:var(--ah);transform:scale(1.08);box-shadow:0 6px 20px rgba(99,102,241,.55)}
+.fab:active{transform:scale(.95)}
+.fab i{font-size:22px}
 .main{flex:1;padding:18px;max-width:900px;margin:0 auto;width:100%}
 .sec-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--hint);margin-bottom:13px}
 
@@ -313,6 +326,13 @@ select option{background:var(--white)}
     </div>
   </div>
   <div class="sb-list" id="sbList"></div>
+  <div class="sb-footer">
+    <button class="sb-add-btn" onclick="closeSidebar();openAdd()"><i class="ti ti-plus"></i> 새 글 작성</button>
+    <div class="sb-user-info" id="sbUserInfo" onclick="closeSidebar();openSettings()">
+      <div class="sb-user-avatar" id="sbUserAvatar">?</div>
+      <span class="sb-user-name" id="sbUserName">로딩 중...</span>
+    </div>
+  </div>
 </div>
 
 <!-- Auth -->
@@ -331,11 +351,14 @@ select option{background:var(--white)}
       <i class="ti ti-search"></i>
       <input class="search-input" type="text" id="searchInput" placeholder="태그·모델명 검색" oninput="onSearch()">
     </div>
-    <button class="btn-add" onclick="openAdd()"><i class="ti ti-plus"></i> 추가</button>
-    <div class="user-chip" id="userChip" onclick="openSettings()"></div>
+    <button class="btn-add" onclick="openAdd()" style="display:none"><i class="ti ti-plus"></i> 추가</button>
+    <div class="user-chip" id="userChip" onclick="openSettings()" style="display:none"></div>
   </div>
   <div class="main" id="main"></div>
 </div>
+
+<!-- FAB -->
+<button class="fab" id="fab" onclick="openAdd()" title="새 글 작성" style="display:none"><i class="ti ti-plus"></i></button>
 
 <!-- Sheet -->
 <div class="overlay" id="overlay" onclick="bgClick(event)">
@@ -477,6 +500,20 @@ async function enterApp(){
   const chip=document.getElementById('userChip');
   chip.innerHTML=`<i class="ti ${currentUser.isMaster?'ti-shield-check':'ti-user'}" style="font-size:13px"></i>${currentUser.username}`;
   chip.className='user-chip'+(currentUser.isMaster?' master':'');
+  // FAB 표시
+  const fab=document.getElementById('fab');
+  if(fab)fab.style.display='flex';
+  // 사이드바 유저 정보 업데이트
+  const sbAvatar=document.getElementById('sbUserAvatar');
+  const sbName=document.getElementById('sbUserName');
+  const sbBadge=document.querySelector('.sb-user-badge');
+  if(sbAvatar)sbAvatar.textContent=(currentUser.username||'?').charAt(0).toUpperCase();
+  if(sbName){
+    sbName.textContent=currentUser.username||'사용자';
+    if(currentUser.isMaster){
+      sbName.insertAdjacentHTML('afterend','<span class="sb-user-badge">마스터</span>');
+    }
+  }
   try{
     const fd=await db.collection('users').doc(currentUser.uid).collection('prefs').doc('favTags').get();
     favTags=fd.exists?(fd.data().tags||[]):[];
