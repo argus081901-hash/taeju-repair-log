@@ -616,8 +616,9 @@ async function doDel(id){
 
 // ═══ Settings ═══
 function openSettings(){
-  location.hash = 'sheet';
+  location.hash = 'sheet'; // 가짜 페이지(해시) 추가
   document.getElementById('overlay').classList.add('on');
+  renderSettingsSheet(); // 이 부분이 지워져서 창이 안 떴던 것입니다!
 }
 
 async function renderSettingsSheet(){
@@ -832,11 +833,10 @@ function dataURLtoFile(dataurl, filename) {
 }
 
 // 캔버스에 그린 그림을 aBlks 배열에 넣고 화면을 다시 그리는 함수
+// 캔버스에 그린 그림을 aBlks 배열에 넣고 화면을 다시 그리는 함수
 function applyDraw() {
-  renderBlks(); 
-  document.getElementById('drawOverlay').classList.remove('on');
-  if(location.hash === '#draw') history.back(); // <--- 이 줄 추가
-}
+  const dataUrl = drawCanvas.toDataURL('image/jpeg', 0.85);
+  const drawnFile = dataURLtoFile(dataUrl, 'markup_' + Date.now() + '.jpg');
 
   // 한솔님의 블록 배열 시스템에 정식으로 데이터 삽입
   aBlks.push({
@@ -844,6 +844,11 @@ function applyDraw() {
     file: drawnFile,
     previewUrl: dataUrl
   });
+  
+  renderBlks(); 
+  document.getElementById('drawOverlay').classList.remove('on');
+  if(location.hash === '#draw') history.back(); // 뒤로가기 방지용 해시 닫기
+}
   
   // 한솔님이 만들어두신 화면 렌더링 함수 재호출
   renderBlks(); 
