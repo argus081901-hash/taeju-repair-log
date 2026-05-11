@@ -848,7 +848,6 @@ function applyDraw() {
   // 한솔님이 만들어두신 화면 렌더링 함수 재호출
   renderBlks(); 
   document.getElementById('drawOverlay').classList.remove('on');
-}
 
 // 브라우저 및 안드로이드 하드웨어 뒤로가기 완벽 제어
 window.addEventListener('popstate', function(e) {
