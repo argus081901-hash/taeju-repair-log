@@ -631,9 +631,10 @@ async function renderSettingsSheet(){
   </div>
   <div class="set-section">
     <div class="set-section-title"><i class="ti ti-lock"></i>비밀번호 변경</div>
-    <div class="fl"><label>현재 비밀번호</label><input type="password" id="cp" placeholder="현재 비밀번호"></div>
-    <div class="fl"><label>새 비밀번호</label><input type="password" id="np1" placeholder="새 비밀번호 (6자 이상)"></div>
-    <div class="fl"><label>새 비밀번호 확인</label><input type="password" id="np2" placeholder="재입력"></div>
+    <input type="text" style="display:none" autocomplete="username">
+    <div class="fl"><label>현재 비밀번호</label><input type="password" id="cp" placeholder="현재 비밀번호" autocomplete="new-password"></div>
+    <div class="fl"><label>새 비밀번호</label><input type="password" id="np1" placeholder="새 비밀번호 (6자 이상)" autocomplete="new-password"></div>
+    <div class="fl"><label>새 비밀번호 확인</label><input type="password" id="np2" placeholder="재입력" autocomplete="new-password"></div>
     <div id="cperr" class="auth-err"></div><div id="cpok" class="auth-ok"></div>
     <button class="btn-save" onclick="doChPass()">비밀번호 변경</button>
   </div>
