@@ -808,8 +808,17 @@ function applyDraw() {
 
 window.addEventListener('popstate', function(e) {
   const overlay = document.querySelector('.overlay.on');
-  const sheet = document.querySelector('.sheet.on');
   const sidebar = document.querySelector('.sidebar.on');
+
+  if (overlay) {
+    closeSheet(); 
+  } else if (sidebar) {
+    closeSidebar();
+  }
+
+  // 항상 히스토리 유지 → 앱 최소화 방지
+  history.pushState(null, '');
+});
 
   if (overlay) {
     overlay.classList.remove('on');
