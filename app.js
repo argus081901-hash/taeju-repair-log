@@ -195,8 +195,18 @@ function triggerNotif(rec){
 }
 
 // ═══ Sidebar ═══
-function openSidebar(){document.getElementById('sidebar').classList.add('on');document.getElementById('sbOverlay').classList.add('on');renderSidebar();}
-function closeSidebar(){document.getElementById('sidebar').classList.remove('on');document.getElementById('sbOverlay').classList.remove('on');}
+function openSidebar(){
+  location.hash = 'sidebar'; // 가짜 페이지(해시) 추가
+  document.getElementById('sidebar').classList.add('on');
+  document.getElementById('sbOverlay').classList.add('on');
+  renderSidebar();
+}
+
+function closeSidebar(){
+  if(location.hash === '#sidebar') history.back(); // 창을 X로 닫으면 해시도 원상복구
+  document.getElementById('sidebar').classList.remove('on');
+  document.getElementById('sbOverlay').classList.remove('on');
+}
 
 function setSbSort(s){
   sbSort=s;
@@ -368,6 +378,7 @@ function openEdit(id){
   closeSheet();setTimeout(()=>openForm(rec),50);
 }
 function openForm(rec){
+  location.hash = 'sheet';
   document.getElementById('overlay').classList.add('on');
   const allA=[...new Set(records.map(r=>r.assignee).filter(Boolean))];
   const aOpts=allA.length?`<datalist id="aList">${allA.map(a=>`<option value="${a}">`).join('')}</datalist>`:'';
@@ -465,6 +476,7 @@ async function submitForm(){
 
 // ═══ Detail ═══
 async function openDetail(id){
+  location.hash = 'sheet';
   document.getElementById('overlay').classList.add('on');
   document.getElementById('sheet').innerHTML=`<div class="sh-handle"></div><div style="text-align:center;padding:32px;color:var(--hint)"><div class="spin" style="margin:0 auto"></div></div>`;
   const rec=records.find(r=>r.id===id);if(!rec){closeSheet();return;}
@@ -603,7 +615,10 @@ async function doDel(id){
 }
 
 // ═══ Settings ═══
-function openSettings(){document.getElementById('overlay').classList.add('on');renderSettingsSheet();}
+function openSettings(){
+  location.hash = 'sheet';
+  document.getElementById('overlay').classList.add('on');
+}
 
 async function renderSettingsSheet(){
   let pendingHTML='',usersHTML='';
@@ -663,12 +678,12 @@ async function doChPass(){
 function doLogout(){if(unsubRecords){unsubRecords();unsubRecords=null;}if(unsubComments){unsubComments();unsubComments=null;}currentUser=null;records=[];favTags=[];auth.signOut();closeSheet();}
 
 function closeSheet() {
+  if(location.hash === '#sheet') history.back(); // 창을 닫으면 해시도 원상복구
   document.getElementById('overlay').classList.remove('on');
   if (unsubComments) {
     unsubComments();
     unsubComments = null;
   }
-  // 🚨 동결 해제: 창이 완전히 닫히면 그때 최신 데이터로 화면을 안전하게 다시 그립니다.
   render(); 
 }
 
@@ -732,6 +747,7 @@ function handleFileSelectForDraw(e) {
 }
 
 function openDrawModal() {
+  location.hash = 'draw';
   document.getElementById('drawOverlay').classList.add('on');
   drawCtx = drawCanvas.getContext('2d');
   const wrap = document.getElementById('drawCanvasWrap');
@@ -817,8 +833,10 @@ function dataURLtoFile(dataurl, filename) {
 
 // 캔버스에 그린 그림을 aBlks 배열에 넣고 화면을 다시 그리는 함수
 function applyDraw() {
-  const dataUrl = drawCanvas.toDataURL('image/jpeg', 0.85);
-  const drawnFile = dataURLtoFile(dataUrl, 'markup_' + Date.now() + '.jpg');
+  renderBlks(); 
+  document.getElementById('drawOverlay').classList.remove('on');
+  if(location.hash === '#draw') history.back(); // <--- 이 줄 추가
+}
 
   // 한솔님의 블록 배열 시스템에 정식으로 데이터 삽입
   aBlks.push({
