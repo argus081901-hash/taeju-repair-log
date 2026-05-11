@@ -833,7 +833,6 @@ function dataURLtoFile(dataurl, filename) {
 }
 
 // 캔버스에 그린 그림을 aBlks 배열에 넣고 화면을 다시 그리는 함수
-// 캔버스에 그린 그림을 aBlks 배열에 넣고 화면을 다시 그리는 함수
 function applyDraw() {
   const dataUrl = drawCanvas.toDataURL('image/jpeg', 0.85);
   const drawnFile = dataURLtoFile(dataUrl, 'markup_' + Date.now() + '.jpg');
@@ -849,10 +848,6 @@ function applyDraw() {
   document.getElementById('drawOverlay').classList.remove('on');
   if(location.hash === '#draw') history.back(); // 뒤로가기 방지용 해시 닫기
 }
-  
-  // 한솔님이 만들어두신 화면 렌더링 함수 재호출
-  renderBlks(); 
-  document.getElementById('drawOverlay').classList.remove('on');
 
 // 브라우저 및 안드로이드 하드웨어 뒤로가기 완벽 제어
 window.addEventListener('popstate', function(e) {
