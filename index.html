@@ -1213,5 +1213,28 @@ function applyDraw() {
     </div>
   </div>
 </div>
+<script>
+// 안드로이드 뒤로가기 처리
+document.addEventListener('backbutton', function(e) {
+  e.preventDefault();
+  
+  // 열려있는 오버레이/시트 닫기
+  const overlay = document.querySelector('.overlay.on');
+  const sheet = document.querySelector('.sheet.on');
+  const sidebar = document.querySelector('.sidebar.on');
+  
+  if (overlay) {
+    overlay.classList.remove('on');
+  } else if (sheet) {
+    sheet.classList.remove('on');
+  } else if (sidebar) {
+    sidebar.classList.remove('on');
+    document.querySelector('.sb-overlay')?.classList.remove('on');
+  } else {
+    // 아무것도 열려있지 않으면 앱 최소화 (종료 X)
+    navigator.app.exitApp();
+  }
+}, false);
+</script>
 </body>
 </html>
