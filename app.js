@@ -1,4 +1,3 @@
-<script>
 // ═══ Firebase ═══
 const firebaseConfig = {
   apiKey: "AIzaSyC3ssZkQtJZU7dTXwwud8oZa1sep_KK4wM",
@@ -837,4 +836,3 @@ window.addEventListener('popstate', function(e) {
 
 // 앱 시작 시 초기 히스토리 추가
 history.pushState(null, '');
-</script>
