@@ -798,7 +798,7 @@ function applyDraw() {
   renderBlks(); 
   document.getElementById('drawOverlay').classList.remove('on');
 }
-</script>
+
   <!-- 마크업 드로우 오버레이 -->
 <div id="drawOverlay" class="overlay" style="z-index:500;">
   <div style="background:#1E293B;width:100%;height:100%;display:flex;flex-direction:column;">
