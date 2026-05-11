@@ -195,18 +195,8 @@ function triggerNotif(rec){
 }
 
 // ═══ Sidebar ═══
-function openSidebar(){
-  location.hash = 'sidebar'; // 가짜 페이지(해시) 추가
-  document.getElementById('sidebar').classList.add('on');
-  document.getElementById('sbOverlay').classList.add('on');
-  renderSidebar();
-}
-
-function closeSidebar(){
-  if(location.hash === '#sidebar') history.back(); // 창을 X로 닫으면 해시도 원상복구
-  document.getElementById('sidebar').classList.remove('on');
-  document.getElementById('sbOverlay').classList.remove('on');
-}
+function openSidebar(){document.getElementById('sidebar').classList.add('on');document.getElementById('sbOverlay').classList.add('on');renderSidebar();}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('on');document.getElementById('sbOverlay').classList.remove('on');}
 
 function setSbSort(s){
   sbSort=s;
@@ -378,15 +368,6 @@ function openEdit(id){
   closeSheet();setTimeout(()=>openForm(rec),50);
 }
 function openForm(rec){
-  // 사이드바에서 넘어왔다면 히스토리가 꼬이지 않게 교체(replace)하고 사이드바를 숨깁니다.
-  if (location.hash === '#sidebar') {
-    location.replace('#sheet');
-    document.getElementById('sidebar').classList.remove('on');
-    document.getElementById('sbOverlay').classList.remove('on');
-  } else {
-    location.hash = 'sheet';
-  }
-  
   document.getElementById('overlay').classList.add('on');
   const allA=[...new Set(records.map(r=>r.assignee).filter(Boolean))];
   const aOpts=allA.length?`<datalist id="aList">${allA.map(a=>`<option value="${a}">`).join('')}</datalist>`:'';
@@ -484,7 +465,6 @@ async function submitForm(){
 
 // ═══ Detail ═══
 async function openDetail(id){
-  location.hash = 'sheet';
   document.getElementById('overlay').classList.add('on');
   document.getElementById('sheet').innerHTML=`<div class="sh-handle"></div><div style="text-align:center;padding:32px;color:var(--hint)"><div class="spin" style="margin:0 auto"></div></div>`;
   const rec=records.find(r=>r.id===id);if(!rec){closeSheet();return;}
@@ -623,18 +603,7 @@ async function doDel(id){
 }
 
 // ═══ Settings ═══
-function openSettings(){
-  // 사이드바에서 넘어왔다면 히스토리가 꼬이지 않게 교체(replace)하고 사이드바를 숨깁니다.
-  if (location.hash === '#sidebar') {
-    location.replace('#sheet');
-    document.getElementById('sidebar').classList.remove('on');
-    document.getElementById('sbOverlay').classList.remove('on');
-  } else {
-    location.hash = 'sheet';
-  }
-  document.getElementById('overlay').classList.add('on');
-  renderSettingsSheet();
-}
+function openSettings(){document.getElementById('overlay').classList.add('on');renderSettingsSheet();}
 
 async function renderSettingsSheet(){
   let pendingHTML='',usersHTML='';
@@ -694,12 +663,12 @@ async function doChPass(){
 function doLogout(){if(unsubRecords){unsubRecords();unsubRecords=null;}if(unsubComments){unsubComments();unsubComments=null;}currentUser=null;records=[];favTags=[];auth.signOut();closeSheet();}
 
 function closeSheet() {
-  if(location.hash === '#sheet') history.back(); // 창을 닫으면 해시도 원상복구
   document.getElementById('overlay').classList.remove('on');
   if (unsubComments) {
     unsubComments();
     unsubComments = null;
   }
+  // 🚨 동결 해제: 창이 완전히 닫히면 그때 최신 데이터로 화면을 안전하게 다시 그립니다.
   render(); 
 }
 
@@ -763,7 +732,6 @@ function handleFileSelectForDraw(e) {
 }
 
 function openDrawModal() {
-  location.hash = 'draw';
   document.getElementById('drawOverlay').classList.add('on');
   drawCtx = drawCanvas.getContext('2d');
   const wrap = document.getElementById('drawCanvasWrap');
@@ -859,30 +827,25 @@ function applyDraw() {
     previewUrl: dataUrl
   });
   
+  // 한솔님이 만들어두신 화면 렌더링 함수 재호출
   renderBlks(); 
   document.getElementById('drawOverlay').classList.remove('on');
-  if(location.hash === '#draw') history.back(); // 뒤로가기 방지용 해시 닫기
 }
 
-// 브라우저 및 안드로이드 하드웨어 뒤로가기 완벽 제어
+// 브라우저 뒤로가기 제어
 window.addEventListener('popstate', function(e) {
-  // URL에 해시(#)가 없다는 것은 기본 홈 화면으로 돌아왔다는 뜻
-  if (location.hash === '') {
-    const overlay = document.getElementById('overlay');
-    const sidebar = document.getElementById('sidebar');
-    const drawOverlay = document.getElementById('drawOverlay');
+  const overlay = document.querySelector('.overlay.on');
+  const sidebar = document.querySelector('.sidebar.on');
 
-    if (overlay && overlay.classList.contains('on')) {
-      overlay.classList.remove('on');
-      if (unsubComments) { unsubComments(); unsubComments = null; }
-      render();
-    }
-    if (sidebar && sidebar.classList.contains('on')) {
-      sidebar.classList.remove('on');
-      document.getElementById('sbOverlay').classList.remove('on');
-    }
-    if (drawOverlay && drawOverlay.classList.contains('on')) {
-      drawOverlay.classList.remove('on');
-    }
+  if (overlay) {
+    // 단순히 class만 지우는 게 아니라 closeSheet를 호출해서 render()까지 실행되게 합니다.
+    closeSheet(); 
+  } else if (sidebar) {
+    closeSidebar();
   }
+
+  history.pushState(null, '');
 });
+
+// 초기 실행 시 히스토리 추가
+history.pushState(null, '');
