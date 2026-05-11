@@ -50,6 +50,7 @@
         <span class="sb-user-name" id="sbUserName">로딩 중...</span>
       </div>
     </div>
+  </div>
 
   <div id="authScr" class="auth-scr" style="display:none">
     <div class="auth-card" id="authCard"></div>
@@ -57,13 +58,13 @@
 
   <div id="appScr" style="display:none;flex-direction:column;flex:1" class="wrap">
     <div class="hdr">
-  <button class="hbtn" onclick="openSidebar()" title="모델 목록"><i class="ti ti-menu-2"></i></button>
-  <button class="hbtn back-btn" id="backBtn" onclick="goHome()"><i class="ti ti-arrow-left"></i></button>
-  <img src="logo.jpg" alt="태주전자" class="hdr-logo"> <span class="hdr-title" id="hdrTitle">수리 일지</span>
+      <button class="hbtn" onclick="openSidebar()" title="모델 목록"><i class="ti ti-menu-2"></i></button>
+      <button class="hbtn back-btn" id="backBtn" onclick="goHome()"><i class="ti ti-arrow-left"></i></button>
+      <img src="logo.jpg" alt="태주전자" class="hdr-logo"> <span class="hdr-title" id="hdrTitle">수리 일지</span>
       <div class="search-wrap">
-  <i class="ti ti-search"></i>
-  <input class="search-input" type="search" id="searchInput" placeholder="태그·모델명 검색" oninput="onSearch()" autocomplete="off">
-</div>
+        <i class="ti ti-search"></i>
+        <input class="search-input" type="search" id="searchInput" placeholder="태그·모델명 검색" oninput="onSearch()" autocomplete="off">
+      </div>
       <button class="btn-add" onclick="openAdd()" style="display:none"><i class="ti ti-plus"></i> 추가</button>
       <div class="user-chip" id="userChip" onclick="openSettings()" style="display:none"></div>
     </div>
@@ -83,7 +84,7 @@
         <div style="display:flex;gap:8px;">
           <button onclick="resetDraw()" style="background:#334155;color:#94A3B8;border:none;padding:7px 14px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;">초기화</button>
           <button onclick="applyDraw()" style="background:#6366F1;color:#fff;border:none;padding:7px 14px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;">완료</button>
-          <button onclick="if(location.hash === '#draw') history.back(); document.getElementById('drawOverlay').classList.remove('on')" style="...">✕</button>
+          <button onclick="if(location.hash === '#draw') history.back(); document.getElementById('drawOverlay').classList.remove('on')" style="background:#334155;color:#94A3B8;border:none;padding:7px 14px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;">✕</button>
         </div>
       </div>
       <div id="drawCanvasWrap" style="flex:1;position:relative;overflow:hidden;">
