@@ -794,7 +794,7 @@ function applyDraw() {
   const dataUrl = drawCanvas.toDataURL('image/jpeg', 0.85);
   const drawnFile = dataURLtoFile(dataUrl, 'markup_' + Date.now() + '.jpg');
 
-// 한솔님의 블록 배열 시스템에 정식으로 데이터 삽입
+  // 한솔님의 블록 배열 시스템에 정식으로 데이터 삽입
   aBlks.push({
     type: 'image',
     file: drawnFile,
@@ -806,17 +806,7 @@ function applyDraw() {
   document.getElementById('drawOverlay').classList.remove('on');
 }
 
-window.addEventListener('popstate', function(e) {
-  const overlay = document.querySelector('.overlay.on');
-  const sidebar = document.querySelector('.sidebar.on');
-
-  if (overlay) {
-    closeSheet(); 
-  } else if (sidebar) {
-    closeSidebar();
-  }
-
-  // 브라우저 뒤로가기 버튼 제어 (창 닫기 로직)
+// 브라우저 뒤로가기 버튼 제어 (창 닫기 로직)
 window.addEventListener('popstate', function(e) {
   const overlay = document.querySelector('.overlay.on');
   const sidebar = document.querySelector('.sidebar.on');
