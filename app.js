@@ -638,7 +638,14 @@ async function doChPass(){
 }
 function doLogout(){if(unsubRecords){unsubRecords();unsubRecords=null;}if(unsubComments){unsubComments();unsubComments=null;}currentUser=null;records=[];favTags=[];auth.signOut();closeSheet();}
 
-function closeSheet(){document.getElementById('overlay').classList.remove('on');if(unsubComments){unsubComments();unsubComments=null;}}
+function closeSheet(){
+  document.getElementById('overlay').classList.remove('on');
+  if(unsubComments){
+    unsubComments();
+    unsubComments=null;
+  }
+  render(); // 창이 닫힐 때 백그라운드 화면을 다시 그리도록 강제합니다!
+}
 function bgClick(e){if(e.target===document.getElementById('overlay'))closeSheet();}
 /* ========== 게시판 전환 로직 (사이드바 연동 버전) ========== */
 var currentBoardCollection = 'records'; 
