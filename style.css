@@ -1,4 +1,3 @@
-<style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#F1F5F9;--white:#FFFFFF;--surface:#FFFFFF;
@@ -310,4 +309,3 @@ select option{background:var(--white)}
 #drawCanvas { position:absolute; cursor:crosshair; }
 .draw-btns { display:flex; gap:10px; }
 .btn-reset { flex:1; background:var(--bg); color:var(--sub); border:none; padding:14px; border-radius:12px; font-weight:700; cursor:pointer; font-family:var(--font); }
-</style>
