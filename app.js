@@ -269,10 +269,11 @@ function render() {
   const bb = document.getElementById('backBtn');
   const ht = document.getElementById('hdrTitle');
 
-  // 데이터가 아직 하나도 로딩되지 않았을 때는 빈 화면 대신 로딩 메시지를 유지합니다.
-  if (records.length === 0 && !getQ()) {
+  // 🚨 [핵심 안전장치] 검색어가 없는데 기록이 0개라면 화면을 빈칸으로 덮어쓰지 않고 무시합니다!
+  if (records.length === 0 && !getQ() && !activeTag && !sidebarModel) {
+    if (m.innerHTML.includes('rcard') || m.innerHTML.includes('tag-tile')) return; // 기존 게시물이 있다면 절대 지우지 않음
     m.innerHTML = `<div class="empty"><div class="spin" style="margin:0 auto 14px"></div><p>기록을 불러오는 중입니다...</p></div>`;
-    // 단, Firebase에서 진짜로 데이터가 0개인 경우를 위해 잠시 후 다시 확인합니다.
+    return;
   }
 
   if (view === 'home' && !sidebarModel) {
@@ -657,14 +658,11 @@ function doLogout(){if(unsubRecords){unsubRecords();unsubRecords=null;}if(unsubC
 function closeSheet() {
   document.getElementById('overlay').classList.remove('on');
   // 댓글 구독 해제
-  if (unsubComments) {
+  if (unsubComments)
     unsubComments();
     unsubComments = null;
   }
-  
-  // 현재 보고 있던 뷰(Home 또는 Records)를 유지하며 다시 그립니다.
-  // 만약 데이터가 아직 로딩 중이라면 잠시 기다렸다가 그릴 수 있도록 render를 호출합니다.
-  render(); 
+  // 주의: 이곳에 절대 render(); 를 넣지 마세요! 배경을 지워버리는 원인이 됩니다.
 }
 function bgClick(e){if(e.target===document.getElementById('overlay'))closeSheet();}
 /* ========== 게시판 전환 로직 (사이드바 연동 버전) ========== */
