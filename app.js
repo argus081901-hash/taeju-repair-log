@@ -161,13 +161,19 @@ function subscribeRecords(){
   const prev=records.length;
   unsubRecords=db.collection(currentBoardCollection).orderBy('date','desc').onSnapshot(snap=>{
     const newRecs=snap.docs.map(d=>({id:d.id,...d.data()}));
-    // Notification for new records by others
+    
     if(prev>0&&notifEnabled&&newRecs.length>records.length){
       const added=newRecs.find(r=>!records.find(x=>x.id===r.id));
       if(added&&added.createdBy!==currentUser.uid) triggerNotif(added);
     }
     records=newRecs;
-    render();
+
+    // 🚨 핵심 방어 로직: 설정창이 켜져 있을 때는 파이어베이스가 요동쳐도 배경 화면을 절대 다시 그리지 않습니다(동결).
+    const isOverlayOpen = document.getElementById('overlay').classList.contains('on');
+    if (!isOverlayOpen) {
+      render();
+    }
+    
     renderSidebar();
   },err=>console.error(err));
 }
