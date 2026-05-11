@@ -816,17 +816,15 @@ window.addEventListener('popstate', function(e) {
     closeSidebar();
   }
 
-  // 항상 히스토리 유지 → 앱 최소화 방지
-  history.pushState(null, '');
-});
+  // 브라우저 뒤로가기 버튼 제어 (창 닫기 로직)
+window.addEventListener('popstate', function(e) {
+  const overlay = document.querySelector('.overlay.on');
+  const sidebar = document.querySelector('.sidebar.on');
 
   if (overlay) {
-    overlay.classList.remove('on');
-  } else if (sheet) {
-    sheet.classList.remove('on');
+    closeSheet(); 
   } else if (sidebar) {
-    sidebar.classList.remove('on');
-    document.querySelector('.sb-overlay')?.classList.remove('on');
+    closeSidebar();
   }
 
   // 항상 히스토리 유지 → 앱 최소화 방지
