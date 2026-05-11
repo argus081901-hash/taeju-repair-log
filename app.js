@@ -185,7 +185,7 @@ async function toggleNotif(val){
 
 function triggerNotif(rec){
   if(!notifEnabled||Notification.permission!=='granted')return;
-  try{new Notification('태주전자 수리 일지',{body:`${rec.assignee||'누군가'}가 ${rec.model||'수리 기록'}을 추가했어요`,icon:'data:image/jpeg;base64});}catch(e){}
+  try{new Notification('태주전자 수리 일지',{body:`${rec.assignee||'누군가'}가 ${rec.model||'수리 기록'}을 추가했어요`,icon:''});}catch(e){}
 }
 
 // ═══ Sidebar ═══
