@@ -1156,7 +1156,20 @@ function openDrawPicker() {
   let inp = document.createElement('input');
   inp.type = 'file';
   inp.accept = 'image/*';
-  inp.onchange = handleFileSelectForDraw;
+  inp.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      aBlks.push({
+        type: 'image',
+        file: file,
+        previewUrl: ev.target.result
+      });
+      renderBlks();
+    };
+    reader.readAsDataURL(file);
+  };
   inp.click();
 }
 
