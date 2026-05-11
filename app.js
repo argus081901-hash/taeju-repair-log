@@ -850,20 +850,25 @@ function applyDraw() {
   document.getElementById('drawOverlay').classList.remove('on');
 }
 
-// 브라우저 뒤로가기 제어
+// 브라우저 및 안드로이드 하드웨어 뒤로가기 완벽 제어
 window.addEventListener('popstate', function(e) {
-  const overlay = document.querySelector('.overlay.on');
-  const sidebar = document.querySelector('.sidebar.on');
+  // URL에 해시(#)가 없다는 것은 기본 홈 화면으로 돌아왔다는 뜻
+  if (location.hash === '') {
+    const overlay = document.getElementById('overlay');
+    const sidebar = document.getElementById('sidebar');
+    const drawOverlay = document.getElementById('drawOverlay');
 
-  if (overlay) {
-    // 단순히 class만 지우는 게 아니라 closeSheet를 호출해서 render()까지 실행되게 합니다.
-    closeSheet(); 
-  } else if (sidebar) {
-    closeSidebar();
+    if (overlay && overlay.classList.contains('on')) {
+      overlay.classList.remove('on');
+      if (unsubComments) { unsubComments(); unsubComments = null; }
+      render();
+    }
+    if (sidebar && sidebar.classList.contains('on')) {
+      sidebar.classList.remove('on');
+      document.getElementById('sbOverlay').classList.remove('on');
+    }
+    if (drawOverlay && drawOverlay.classList.contains('on')) {
+      drawOverlay.classList.remove('on');
+    }
   }
-
-  history.pushState(null, '');
 });
-
-// 초기 실행 시 히스토리 추가
-history.pushState(null, '');
