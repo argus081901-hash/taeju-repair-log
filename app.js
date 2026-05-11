@@ -378,7 +378,15 @@ function openEdit(id){
   closeSheet();setTimeout(()=>openForm(rec),50);
 }
 function openForm(rec){
-  location.hash = 'sheet';
+  // 사이드바에서 넘어왔다면 히스토리가 꼬이지 않게 교체(replace)하고 사이드바를 숨깁니다.
+  if (location.hash === '#sidebar') {
+    location.replace('#sheet');
+    document.getElementById('sidebar').classList.remove('on');
+    document.getElementById('sbOverlay').classList.remove('on');
+  } else {
+    location.hash = 'sheet';
+  }
+  
   document.getElementById('overlay').classList.add('on');
   const allA=[...new Set(records.map(r=>r.assignee).filter(Boolean))];
   const aOpts=allA.length?`<datalist id="aList">${allA.map(a=>`<option value="${a}">`).join('')}</datalist>`:'';
@@ -616,9 +624,16 @@ async function doDel(id){
 
 // ═══ Settings ═══
 function openSettings(){
-  location.hash = 'sheet'; // 가짜 페이지(해시) 추가
+  // 사이드바에서 넘어왔다면 히스토리가 꼬이지 않게 교체(replace)하고 사이드바를 숨깁니다.
+  if (location.hash === '#sidebar') {
+    location.replace('#sheet');
+    document.getElementById('sidebar').classList.remove('on');
+    document.getElementById('sbOverlay').classList.remove('on');
+  } else {
+    location.hash = 'sheet';
+  }
   document.getElementById('overlay').classList.add('on');
-  renderSettingsSheet(); // 이 부분이 지워져서 창이 안 떴던 것입니다!
+  renderSettingsSheet();
 }
 
 async function renderSettingsSheet(){
