@@ -132,10 +132,8 @@ async function enterApp(){
   const chip=document.getElementById('userChip');
   chip.innerHTML=`<i class="ti ${currentUser.isMaster?'ti-shield-check':'ti-user'}" style="font-size:13px"></i>${currentUser.username}`;
   chip.className='user-chip'+(currentUser.isMaster?' master':'');
-  // FAB 표시
   const fab=document.getElementById('fab');
   if(fab)fab.style.display='flex';
-  // 사이드바 유저 정보 업데이트
   const sbAvatar=document.getElementById('sbUserAvatar');
   const sbName=document.getElementById('sbUserName');
   const sbBadge=document.querySelector('.sb-user-badge');
@@ -168,7 +166,6 @@ function subscribeRecords(){
     }
     records=newRecs;
 
-    // 🚨 핵심 방어 로직: 설정창이 켜져 있을 때는 파이어베이스가 요동쳐도 배경 화면을 절대 다시 그리지 않습니다(동결).
     const isOverlayOpen = document.getElementById('overlay').classList.contains('on');
     if (!isOverlayOpen) {
       render();
@@ -195,8 +192,18 @@ function triggerNotif(rec){
 }
 
 // ═══ Sidebar ═══
-function openSidebar(){document.getElementById('sidebar').classList.add('on');document.getElementById('sbOverlay').classList.add('on');renderSidebar();}
-function closeSidebar(){document.getElementById('sidebar').classList.remove('on');document.getElementById('sbOverlay').classList.remove('on');}
+function openSidebar(){
+  location.hash = 'sidebar';
+  document.getElementById('sidebar').classList.add('on');
+  document.getElementById('sbOverlay').classList.add('on');
+  renderSidebar();
+}
+
+function closeSidebar(){
+  if(location.hash === '#sidebar') history.back();
+  document.getElementById('sidebar').classList.remove('on');
+  document.getElementById('sbOverlay').classList.remove('on');
+}
 
 function setSbSort(s){
   sbSort=s;
@@ -275,9 +282,8 @@ function render() {
   const bb = document.getElementById('backBtn');
   const ht = document.getElementById('hdrTitle');
 
-  // 🚨 [핵심 안전장치] 검색어가 없는데 기록이 0개라면 화면을 빈칸으로 덮어쓰지 않고 무시합니다!
   if (records.length === 0 && !getQ() && !activeTag && !sidebarModel) {
-    if (m.innerHTML.includes('rcard') || m.innerHTML.includes('tag-tile')) return; // 기존 게시물이 있다면 절대 지우지 않음
+    if (m.innerHTML.includes('rcard') || m.innerHTML.includes('tag-tile')) return;
     m.innerHTML = `<div class="empty"><div class="spin" style="margin:0 auto 14px"></div><p>기록을 불러오는 중입니다...</p></div>`;
     return;
   }
@@ -368,6 +374,13 @@ function openEdit(id){
   closeSheet();setTimeout(()=>openForm(rec),50);
 }
 function openForm(rec){
+  if (location.hash === '#sidebar') {
+    location.replace('#sheet');
+    document.getElementById('sidebar').classList.remove('on');
+    document.getElementById('sbOverlay').classList.remove('on');
+  } else {
+    location.hash = 'sheet';
+  }
   document.getElementById('overlay').classList.add('on');
   const allA=[...new Set(records.map(r=>r.assignee).filter(Boolean))];
   const aOpts=allA.length?`<datalist id="aList">${allA.map(a=>`<option value="${a}">`).join('')}</datalist>`:'';
@@ -431,7 +444,6 @@ async function submitForm(){
   const btn=document.getElementById('saveBtn');btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> 저장 중...';
   ld(true,'이미지 업로드 중...');
   try{
-    // [수정 1] 새 문서 ID 생성 부분
     const recId=editingId||db.collection(currentBoardCollection).doc().id;
     const processedBlocks=[];
     let thumbUrl=editingId?(records.find(r=>r.id===editingId)?.thumbUrl||null):null;
@@ -452,10 +464,8 @@ async function submitForm(){
     if(editingId){
       const old=records.find(r=>r.id===editingId);
       const hist=[...(old?.history||[]),histEntry];
-      // [수정 2] 기존 글 업데이트 부분
       await db.collection(currentBoardCollection).doc(editingId).update({model,assignee,tags:[...aTags],blocks:processedBlocks,thumbUrl,firstText,updatedAt:now,history:hist});
     }else{
-      // [수정 3] 새 글 저장 부분
       await db.collection(currentBoardCollection).doc(recId).set({model,assignee,tags:[...aTags],blocks:processedBlocks,thumbUrl,firstText,date:now,updatedAt:null,createdBy:currentUser.uid,history:[histEntry],commentCount:0});
     }
     editingId=null;closeSheet();toast(editingId?'수정됐어요!':'저장됐어요!','ok');
@@ -465,6 +475,7 @@ async function submitForm(){
 
 // ═══ Detail ═══
 async function openDetail(id){
+  location.hash = 'sheet';
   document.getElementById('overlay').classList.add('on');
   document.getElementById('sheet').innerHTML=`<div class="sh-handle"></div><div style="text-align:center;padding:32px;color:var(--hint)"><div class="spin" style="margin:0 auto"></div></div>`;
   const rec=records.find(r=>r.id===id);if(!rec){closeSheet();return;}
@@ -526,7 +537,6 @@ async function copyImg(url){
     await navigator.clipboard.write([new ClipboardItem({'image/png':imgBlob})]);
     toast('이미지가 복사됐어요 📋','ok');
   }catch(e){
-    // Fallback: open in new tab
     window.open(url,'_blank');
     toast('브라우저 제한으로 새 탭에서 열었어요');
   }
@@ -535,12 +545,10 @@ async function copyImg(url){
 // ═══ Comments ═══
 function loadComments(recId){
   if(unsubComments)unsubComments();
-  // [수정 1] 해당 게시판의 글에서 댓글을 불러오기
   unsubComments=db.collection(currentBoardCollection).doc(recId).collection('comments').orderBy('createdAt','asc').onSnapshot(snap=>{
     const comments=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderComments(comments,recId);
     document.getElementById('cmtCnt').textContent=comments.length;
-    // [수정 2] 해당 게시판의 원본 글에 댓글 개수 업데이트하기
     db.collection(currentBoardCollection).doc(recId).update({commentCount:comments.length}).catch(()=>{});
   },err=>console.error(err));
 }
@@ -567,7 +575,6 @@ async function addComment(recId){
   const inp=document.getElementById('cmtInput');
   const text=inp?.value.trim();if(!text)return;
   try{
-    // [수정] 현재 게시판에 댓글 달기
     await db.collection(currentBoardCollection).doc(recId).collection('comments').add({text,authorId:currentUser.uid,authorName:currentUser.username,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     if(inp)inp.value='';
   }catch(e){toast('댓글 등록에 실패했어요','err');}
@@ -576,7 +583,6 @@ async function addComment(recId){
 async function delComment(recId,cmtId){
   if(!confirm('댓글을 삭제할까요?'))return;
   try{
-    // [수정] 현재 게시판의 댓글 삭제
     await db.collection(currentBoardCollection).doc(recId).collection('comments').doc(cmtId).delete();
   }
   catch(e){toast('삭제에 실패했어요','err');}
@@ -591,11 +597,9 @@ async function doDel(id){
     if(rec){
       for(const b of(rec.blocks||[])){if(b.type==='image'&&b.path){try{await storage.ref(b.path).delete();}catch(e){}}}
       try{await storage.ref(`thumbs/${id}.jpg`).delete();}catch(e){}
-      // [수정] 해당 게시판의 댓글 데이터들 먼저 지우기
       const cmts=await db.collection(currentBoardCollection).doc(id).collection('comments').get();
       for(const c of cmts.docs)await c.ref.delete();
     }
-    // [수정] 해당 게시판의 본문 데이터 지우기
     await db.collection(currentBoardCollection).doc(id).delete();
     closeSheet();toast('삭제됐어요');
   }catch(err){toast('삭제에 실패했어요','err');}
@@ -603,7 +607,17 @@ async function doDel(id){
 }
 
 // ═══ Settings ═══
-function openSettings(){document.getElementById('overlay').classList.add('on');renderSettingsSheet();}
+function openSettings(){
+  if (location.hash === '#sidebar') {
+    location.replace('#sheet');
+    document.getElementById('sidebar').classList.remove('on');
+    document.getElementById('sbOverlay').classList.remove('on');
+  } else {
+    location.hash = 'sheet';
+  }
+  document.getElementById('overlay').classList.add('on');
+  renderSettingsSheet();
+}
 
 async function renderSettingsSheet(){
   let pendingHTML='',usersHTML='';
@@ -663,12 +677,12 @@ async function doChPass(){
 function doLogout(){if(unsubRecords){unsubRecords();unsubRecords=null;}if(unsubComments){unsubComments();unsubComments=null;}currentUser=null;records=[];favTags=[];auth.signOut();closeSheet();}
 
 function closeSheet() {
+  if(location.hash === '#sheet') history.back();
   document.getElementById('overlay').classList.remove('on');
   if (unsubComments) {
     unsubComments();
     unsubComments = null;
   }
-  // 🚨 동결 해제: 창이 완전히 닫히면 그때 최신 데이터로 화면을 안전하게 다시 그립니다.
   render(); 
 }
 
@@ -679,21 +693,17 @@ var currentBoardCollection = 'records';
 function setBoard(boardType) {
   currentBoardCollection = boardType;
   
-  // 1. 헤더 타이틀 변경
   const ht = document.getElementById('hdrTitle');
   if(ht) ht.textContent = boardType === 'records' ? '수리 일지' : '가이드';
   
-  // 2. 사이드바 메뉴 활성화 시각화 (기존 코드의 sb-item 스타일 활용)
   const recTab = document.getElementById('sideTabRecords');
   const guiTab = document.getElementById('sideTabGuides');
   
   if(recTab) recTab.classList.toggle('active', boardType === 'records');
   if(guiTab) guiTab.classList.toggle('active', boardType === 'guides');
   
-  // 3. 데이터 새로고침 (기본 데이터 구독 함수 호출)
   if(typeof subscribeRecords === 'function') subscribeRecords(); 
   
-  // 4. 메뉴 클릭 후 사이드바 자동으로 닫기
   if(typeof closeSidebar === 'function') closeSidebar();
   
   toast(boardType === 'records' ? '수리 일지로 이동했습니다.' : '가이드로 이동했습니다.');
@@ -705,7 +715,6 @@ let drawCtx;
 let isDrawing = false;
 let drawCanvas;
 
-// 페이지가 켜지면 캔버스 이벤트 등록
 window.addEventListener('DOMContentLoaded', () => {
   drawCanvas = document.getElementById('drawCanvas');
   if(drawCanvas) {
@@ -732,12 +741,12 @@ function handleFileSelectForDraw(e) {
 }
 
 function openDrawModal() {
+  location.hash = 'draw';
   document.getElementById('drawOverlay').classList.add('on');
   drawCtx = drawCanvas.getContext('2d');
   const wrap = document.getElementById('drawCanvasWrap');
   const ww = wrap.clientWidth; const wh = wrap.clientHeight; const wr = ww / wh;
   
-  // 해상도 조절 (최대 1200px)
   let iw = baseImg.width; let ih = baseImg.height;
   const MAX_RES = 1200;
   if(iw > MAX_RES || ih > MAX_RES) {
@@ -746,7 +755,6 @@ function openDrawModal() {
   }
   drawCanvas.width = iw; drawCanvas.height = ih;
   
-  // 화면 중앙에 비율 맞춰 정렬
   const ir = iw / ih; let dw, dh;
   if(ir > wr) { dw = ww; dh = ww / ir; } else { dh = wh; dw = wh * ir; }
   drawCanvas.style.width = dw + 'px'; drawCanvas.style.height = dh + 'px';
@@ -785,7 +793,6 @@ const moveDraw = (e) => {
 
 const endDraw = () => { isDrawing = false; };
 
-// 버튼을 누르면 숨겨진 파일 선택창을 생성해서 띄워주는 함수
 function openDrawPicker() {
   let inp = document.createElement('input');
   inp.type = 'file';
@@ -807,7 +814,6 @@ function openDrawPicker() {
   inp.click();
 }
 
-// Base64 이미지 데이터를 한솔님의 기존 저장 로직과 호환되는 File 객체로 변환하는 함수
 function dataURLtoFile(dataurl, filename) {
   let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
       bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
@@ -815,37 +821,38 @@ function dataURLtoFile(dataurl, filename) {
   return new File([u8arr], filename, {type:mime});
 }
 
-// 캔버스에 그린 그림을 aBlks 배열에 넣고 화면을 다시 그리는 함수
 function applyDraw() {
   const dataUrl = drawCanvas.toDataURL('image/jpeg', 0.85);
   const drawnFile = dataURLtoFile(dataUrl, 'markup_' + Date.now() + '.jpg');
 
-  // 한솔님의 블록 배열 시스템에 정식으로 데이터 삽입
   aBlks.push({
     type: 'image',
     file: drawnFile,
     previewUrl: dataUrl
   });
   
-  // 한솔님이 만들어두신 화면 렌더링 함수 재호출
   renderBlks(); 
   document.getElementById('drawOverlay').classList.remove('on');
+  if(location.hash === '#draw') history.back();
 }
 
-// 브라우저 뒤로가기 제어
 window.addEventListener('popstate', function(e) {
-  const overlay = document.querySelector('.overlay.on');
-  const sidebar = document.querySelector('.sidebar.on');
+  if (location.hash === '') {
+    const overlay = document.getElementById('overlay');
+    const sidebar = document.getElementById('sidebar');
+    const drawOverlay = document.getElementById('drawOverlay');
 
-  if (overlay) {
-    // 단순히 class만 지우는 게 아니라 closeSheet를 호출해서 render()까지 실행되게 합니다.
-    closeSheet(); 
-  } else if (sidebar) {
-    closeSidebar();
+    if (overlay && overlay.classList.contains('on')) {
+      overlay.classList.remove('on');
+      if (unsubComments) { unsubComments(); unsubComments = null; }
+      render();
+    }
+    if (sidebar && sidebar.classList.contains('on')) {
+      sidebar.classList.remove('on');
+      document.getElementById('sbOverlay').classList.remove('on');
+    }
+    if (drawOverlay && drawOverlay.classList.contains('on')) {
+      drawOverlay.classList.remove('on');
+    }
   }
-
-  history.pushState(null, '');
 });
-
-// 초기 실행 시 히스토리 추가
-history.pushState(null, '');
