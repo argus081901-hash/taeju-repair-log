@@ -663,11 +663,13 @@ function doLogout(){if(unsubRecords){unsubRecords();unsubRecords=null;}if(unsubC
 
 function closeSheet() {
   document.getElementById('overlay').classList.remove('on');
-  // 댓글 구독 해제
-  if (unsubComments)
+  if (unsubComments) {
     unsubComments();
     unsubComments = null;
   }
+  // 🚨 동결 해제: 창이 완전히 닫히면 그때 최신 데이터로 화면을 안전하게 다시 그립니다.
+  render(); 
+}
 
 function bgClick(e){if(e.target===document.getElementById('overlay'))closeSheet();}
 /* ========== 게시판 전환 로직 (사이드바 연동 버전) ========== */
