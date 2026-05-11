@@ -263,11 +263,27 @@ function setSort(s){sortMode=s;render();}
 function onSearch(){render();}
 
 // ═══ Render ═══
-function render(){
-  if(!currentUser)return;
-  const m=document.getElementById('main'),bb=document.getElementById('backBtn'),ht=document.getElementById('hdrTitle');
-  if(view==='home'&&!sidebarModel){bb.classList.remove('on');ht.textContent='수리 일지';renderHome(m);}
-  else{bb.classList.add('on');ht.textContent=sidebarModel?sidebarModel:(activeTag?'#'+activeTag:'전체 기록');renderRecs(m);}
+function render() {
+  if (!currentUser) return;
+  const m = document.getElementById('main');
+  const bb = document.getElementById('backBtn');
+  const ht = document.getElementById('hdrTitle');
+
+  // 데이터가 아직 하나도 로딩되지 않았을 때는 빈 화면 대신 로딩 메시지를 유지합니다.
+  if (records.length === 0 && !getQ()) {
+    m.innerHTML = `<div class="empty"><div class="spin" style="margin:0 auto 14px"></div><p>기록을 불러오는 중입니다...</p></div>`;
+    // 단, Firebase에서 진짜로 데이터가 0개인 경우를 위해 잠시 후 다시 확인합니다.
+  }
+
+  if (view === 'home' && !sidebarModel) {
+    bb.classList.remove('on');
+    ht.textContent = '수리 일지';
+    renderHome(m);
+  } else {
+    bb.classList.add('on');
+    ht.textContent = sidebarModel ? sidebarModel : (activeTag ? '#' + activeTag : '전체 기록');
+    renderRecs(m);
+  }
 }
 
 function sortUI(){
@@ -638,13 +654,17 @@ async function doChPass(){
 }
 function doLogout(){if(unsubRecords){unsubRecords();unsubRecords=null;}if(unsubComments){unsubComments();unsubComments=null;}currentUser=null;records=[];favTags=[];auth.signOut();closeSheet();}
 
-function closeSheet(){
+function closeSheet() {
   document.getElementById('overlay').classList.remove('on');
-  if(unsubComments){
+  // 댓글 구독 해제
+  if (unsubComments) {
     unsubComments();
-    unsubComments=null;
+    unsubComments = null;
   }
-  render(); // 창이 닫힐 때 백그라운드 화면을 다시 그리도록 강제합니다!
+  
+  // 현재 보고 있던 뷰(Home 또는 Records)를 유지하며 다시 그립니다.
+  // 만약 데이터가 아직 로딩 중이라면 잠시 기다렸다가 그릴 수 있도록 render를 호출합니다.
+  render(); 
 }
 function bgClick(e){if(e.target===document.getElementById('overlay'))closeSheet();}
 /* ========== 게시판 전환 로직 (사이드바 연동 버전) ========== */
@@ -806,20 +826,20 @@ function applyDraw() {
   document.getElementById('drawOverlay').classList.remove('on');
 }
 
-// 브라우저 뒤로가기 버튼 제어 (창 닫기 로직)
+// 브라우저 뒤로가기 제어
 window.addEventListener('popstate', function(e) {
   const overlay = document.querySelector('.overlay.on');
   const sidebar = document.querySelector('.sidebar.on');
 
   if (overlay) {
+    // 단순히 class만 지우는 게 아니라 closeSheet를 호출해서 render()까지 실행되게 합니다.
     closeSheet(); 
   } else if (sidebar) {
     closeSidebar();
   }
 
-  // 항상 히스토리 유지 → 앱 최소화 방지
   history.pushState(null, '');
 });
 
-// 앱 시작 시 초기 히스토리 추가
+// 초기 실행 시 히스토리 추가
 history.pushState(null, '');
