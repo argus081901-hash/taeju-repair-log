@@ -1214,11 +1214,6 @@ function applyDraw() {
   </div>
 </div>
 <script>
-// 안드로이드 뒤로가기 - History API 방식
-function pushHistory() {
-  history.pushState({ page: 'overlay' }, '');
-}
-
 window.addEventListener('popstate', function(e) {
   const overlay = document.querySelector('.overlay.on');
   const sheet = document.querySelector('.sheet.on');
@@ -1226,19 +1221,19 @@ window.addEventListener('popstate', function(e) {
 
   if (overlay) {
     overlay.classList.remove('on');
-    pushHistory();
   } else if (sheet) {
     sheet.classList.remove('on');
-    pushHistory();
   } else if (sidebar) {
     sidebar.classList.remove('on');
     document.querySelector('.sb-overlay')?.classList.remove('on');
-    pushHistory();
   }
+
+  // 항상 히스토리 유지 → 앱 최소화 방지
+  history.pushState(null, '');
 });
 
-// 앱 시작 시 히스토리 초기 상태 추가
-history.pushState({ page: 'main' }, '');
+// 앱 시작 시 초기 히스토리 추가
+history.pushState(null, '');
 </script>
 </body>
 </html>
