@@ -662,8 +662,7 @@ function closeSheet() {
     unsubComments();
     unsubComments = null;
   }
-  // 주의: 이곳에 절대 render(); 를 넣지 마세요! 배경을 지워버리는 원인이 됩니다.
-}
+
 function bgClick(e){if(e.target===document.getElementById('overlay'))closeSheet();}
 /* ========== 게시판 전환 로직 (사이드바 연동 버전) ========== */
 var currentBoardCollection = 'records'; 
