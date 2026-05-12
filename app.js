@@ -291,6 +291,7 @@ function render() {
   if (view === 'home' && !sidebarModel) {
     bb.classList.remove('on');
     ht.textContent = '수리 일지';
+    if (location.hash === '#view') history.replaceState(null, '', location.pathname);
     renderHome(m);
   } else {
     bb.classList.add('on');
@@ -339,9 +340,9 @@ function rcHTML(r,q){
   </div>`;
 }
 
-function openTag(t){activeTag=t;sidebarModel=null;view='records';render();}
-function openAll(){activeTag=null;sidebarModel=null;view='records';render();}
-function goHome(){activeTag=null;sidebarModel=null;view='home';render();}
+function openTag(t){activeTag=t;sidebarModel=null;view='records';location.hash='view';render();}
+function openAll(){activeTag=null;sidebarModel=null;view='records';location.hash='view';render();}
+function goHome(){if(location.hash==='#view'){history.back();}else{activeTag=null;sidebarModel=null;view='home';render();}}
 
 // ═══ Favs ═══
 async function saveFavs(){if(!currentUser)return;try{await db.collection('users').doc(currentUser.uid).collection('prefs').doc('favTags').set({tags:favTags});}catch(e){}}
@@ -837,22 +838,28 @@ function applyDraw() {
 }
 
 window.addEventListener('popstate', function(e) {
-  if (location.hash === '') {
-    const overlay = document.getElementById('overlay');
-    const sidebar = document.getElementById('sidebar');
-    const drawOverlay = document.getElementById('drawOverlay');
+  const overlay = document.getElementById('overlay');
+  const sidebar = document.getElementById('sidebar');
+  const drawOverlay = document.getElementById('drawOverlay');
 
+  if (location.hash === '') {
+    if (drawOverlay && drawOverlay.classList.contains('on')) {
+      drawOverlay.classList.remove('on');
+      return;
+    }
     if (overlay && overlay.classList.contains('on')) {
       overlay.classList.remove('on');
       if (unsubComments) { unsubComments(); unsubComments = null; }
-      render();
     }
     if (sidebar && sidebar.classList.contains('on')) {
       sidebar.classList.remove('on');
       document.getElementById('sbOverlay').classList.remove('on');
     }
-    if (drawOverlay && drawOverlay.classList.contains('on')) {
-      drawOverlay.classList.remove('on');
+    if (view !== 'home') {
+      activeTag = null;
+      sidebarModel = null;
+      view = 'home';
+      render();
     }
   }
 });
